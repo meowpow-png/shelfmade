@@ -1,0 +1,22 @@
+name: shelfmade
+
+services:
+  codex:
+    image: ghcr.io/meowpow-png/mipe-runtime-codex-web:latest
+    volumes:
+      - codex-home:/home/dev/web/.codex
+      - .:/workspace:z
+    stdin_open: true
+    tty: true
+
+  claude:
+    image: ghcr.io/meowpow-png/mipe-runtime-claude-web:latest
+    volumes:
+      - claude-home:/home/dev/web
+      - .:/workspace:z
+    stdin_open: true
+    tty: true
+
+volumes:
+  codex-home:
+  claude-home:
