@@ -1,0 +1,17 @@
+node_modules/
+dist/
+
+# IntelliJ IDEA
+.idea/*
+!.idea/codeStyles/
+
+# Local environment files
+.env
+.env.*
+
+# MCP
+.playwright-mcp/
+
+# AI
+.codex/
+.claude/
