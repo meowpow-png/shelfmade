@@ -2,3 +2,11 @@
   --color-ink: #000;
   --color-paper: #fff;
 }
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  color: var(--color-ink);
+  background: var(--color-paper);
+}
