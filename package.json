@@ -28,7 +28,7 @@
   "scripts": {
     "prepare": "lefthook install",
     "clean": "rm -rf node_modules dist",
-    "build": "tsc && tsc-alias",
+    "build": "tsc && tsc-alias && cp -r src/runtime dist/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:eslint": "eslint .",
