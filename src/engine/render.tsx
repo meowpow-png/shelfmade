@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { type ComponentType } from 'react'
 
 import { copyAssets } from '@/engine/assets'
-import { renderDocument } from '@/engine/document'
+import { renderDocument, renderIndex } from '@/engine/document'
 
 export interface Book {
   slug: string
@@ -32,4 +32,16 @@ export function renderBooks(books: Book[], outDir: string) {
 
     writeFileSync(join(outDir, `${slug}.html`), renderDocument({ title, lang, stylesheets }, body))
   }
+
+  const index = renderToStaticMarkup(
+    <ul>
+      {books.map(({ slug, title }) => (
+        <li key={slug}>
+          <a href={`${slug}.html`}>{title}</a>
+        </li>
+      ))}
+    </ul>,
+  )
+
+  writeFileSync(join(outDir, 'index.html'), renderIndex(index))
 }

@@ -55,6 +55,7 @@ This does the same render, then prints every book using headless Chromium via Pl
 All commands write into `dist/`, which is generated and should be gitignored, one file per book:
 
 - `dist/<book>.html` — the rendered pages
+- `dist/index.html` — links to every rendered book, for development
 - `dist/<book>.pdf` — the printed PDFs
 
 ## Adding a new book

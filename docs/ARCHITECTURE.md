@@ -46,7 +46,7 @@ Shelfmade discovers books and their content by convention from the configuration
 
 ## Engine
 
-The engine turns a book project into one static HTML document per book. It reads the configuration, discovers each book's chapters, renders them with the project's components injected, and wraps the result in a document that loads the runtime.
+The engine turns a book project into one static HTML document per book, plus an index page linking to them. It reads the configuration, discovers each book's chapters, renders them with the project's components injected, and wraps the result in a document that loads the runtime.
 
 **Rules**
 
