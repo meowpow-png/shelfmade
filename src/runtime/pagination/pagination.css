@@ -23,3 +23,8 @@ h6 {
 .pagedjs_page_content > :first-child > h2:first-child {
   margin-top: 0;
 }
+
+.pagination-intact-ending {
+  hyphens: none;
+  white-space: nowrap;
+}
