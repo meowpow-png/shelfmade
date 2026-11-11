@@ -6,6 +6,15 @@
   margin: 16mm 16mm 20mm;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  break-inside: avoid;
+}
+
 .pagedjs_pagebox {
   background-color: var(--color-paper);
 }

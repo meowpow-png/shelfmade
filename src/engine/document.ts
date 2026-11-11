@@ -16,6 +16,13 @@ ${links}
     <link rel="stylesheet" href="shelfmade/preview.css" media="screen" />
     <script>window.PagedConfig = { after: () => { window.PAGED_READY = true } };</script>
     <script src="shelfmade/vendor/paged.polyfill.min.js"></script>
+    <script src="shelfmade/pagination/break-token.js"></script>
+    <script src="shelfmade/pagination/measurement.js"></script>
+    <script src="shelfmade/pagination/rendered-elements.js"></script>
+    <script src="shelfmade/pagination/keep-heading-with-paragraph.js"></script>
+    <script src="shelfmade/pagination/min-widow-lines.js"></script>
+    <script src="shelfmade/pagination/min-orphan-lines.js"></script>
+    <script src="shelfmade/pagination/pagination-rules.js"></script>
   </head>
   <body>${body}</body>
 </html>

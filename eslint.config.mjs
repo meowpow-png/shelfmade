@@ -18,6 +18,10 @@ export default defineConfig([
     languageOptions: { globals: { ...globals.node } },
   },
   {
+    files: ['src/runtime/pagination/**/*.js'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+  {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     extends: [tseslint.configs.recommended],
   },
