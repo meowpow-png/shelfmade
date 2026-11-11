@@ -32,7 +32,7 @@ export function renderBooks(books: Book[], outDir: string) {
     const body = renderToStaticMarkup(<App />)
     copyAssets(dir, join(outDir, 'books', slug))
 
-    const stylesheets = ['shelfmade/tokens.css']
+    const stylesheets = ['shelfmade/tokens.css', 'shelfmade/pagination.css']
     if (stylesheet) stylesheets.push(`books/${slug}/${stylesheet}`)
 
     writeFileSync(join(outDir, `${slug}.html`), renderDocument({ title, lang, stylesheets }, body))

@@ -1,0 +1,15 @@
+@page {
+  /* paged.js parses this statically and can't resolve var(), so it must match
+     --page-width/--page-height in tokens.css literally; a book changing the
+     page size overrides both */
+  size: 148mm 210mm;
+  margin: 16mm 16mm 20mm;
+}
+
+.pagedjs_pagebox {
+  background-color: var(--color-paper);
+}
+
+.pagedjs_page_content > h2:first-child {
+  margin-top: 0;
+}
