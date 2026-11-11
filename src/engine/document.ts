@@ -21,6 +21,7 @@ ${links}
     <script src="shelfmade/pagination/rendered-elements.js"></script>
     <script src="shelfmade/pagination/protect-paragraph-ending.js"></script>
     <script src="shelfmade/pagination/keep-heading-with-paragraph.js"></script>
+    <script src="shelfmade/pagination/keep-hyphenated-word-together.js"></script>
     <script src="shelfmade/pagination/min-widow-lines.js"></script>
     <script src="shelfmade/pagination/min-orphan-lines.js"></script>
     <script src="shelfmade/pagination/pagination-rules.js"></script>
