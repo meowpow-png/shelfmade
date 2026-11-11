@@ -18,6 +18,7 @@ export async function printBooks(slugs: string[], outDir: string) {
       const page = await browser.newPage()
 
       await page.goto(pathToFileURL(resolve(outDir, `${slug}.html`)).href)
+      await page.emulateMedia({ media: 'print' })
       const { width, height } = await page.evaluate(readPageSize)
       await page.pdf({
         path: resolve(outDir, `${slug}.pdf`),
