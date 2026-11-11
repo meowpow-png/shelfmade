@@ -19,6 +19,7 @@ h6 {
   background-color: var(--color-paper);
 }
 
-.pagedjs_page_content > h2:first-child {
+.pagedjs_page_content > h2:first-child,
+.pagedjs_page_content > :first-child > h2:first-child {
   margin-top: 0;
 }
