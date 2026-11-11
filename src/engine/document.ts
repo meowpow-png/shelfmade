@@ -13,6 +13,9 @@ export function renderDocument({ title, lang, stylesheets }: DocumentOptions, bo
     <meta charset="UTF-8" />
     <title>${title}</title>
 ${links}
+    <link rel="stylesheet" href="shelfmade/preview.css" media="screen" />
+    <script>window.PagedConfig = { after: () => { window.PAGED_READY = true } };</script>
+    <script src="shelfmade/vendor/paged.polyfill.min.js"></script>
   </head>
   <body>${body}</body>
 </html>
