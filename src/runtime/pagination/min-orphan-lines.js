@@ -7,8 +7,8 @@
       const measured = measureBreak(breakToken, overflow, rendered)
       if (!measured) return
 
-      const { paragraph, layoutParagraph, totalLines, linesBefore } = measured
-      if (totalLines < MIN_ORPHAN_LINES) return
+      const { paragraph, layoutParagraph, linesBefore, hasTextAfter } = measured
+      if (!hasTextAfter) return
 
       // A zero value means the whole paragraph is already deferred.
       // Otherwise, too few lines can only be fixed by moving the whole paragraph.

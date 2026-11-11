@@ -54,6 +54,18 @@
     return textPositionAt(toElement, textOffsetWithin(fromElement, node, offset))
   }
 
+  function endOfElement(element) {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+    let node = walker.nextNode()
+    let lastNode = null
+
+    while (node) {
+      lastNode = node
+      node = walker.nextNode()
+    }
+    return lastNode ? { node: lastNode, offset: lastNode.textContent.length } : null
+  }
+
   function findLineStart(element, lineRect) {
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
     const range = document.createRange()
@@ -98,7 +110,12 @@
     const renderedParagraph = renderedParagraphFor(paragraph, rendered)
     const layoutParagraph = renderedParagraph || paragraph
     const sourceOffset = textOffsetWithin(paragraph, textNode, breakToken.offset)
-    const layoutPosition = textPositionAt(layoutParagraph, sourceOffset)
+
+    // The clone can be a truncated in-progress prefix; an offset past
+    // its end just means everything in it counts as "before" the break.
+    const layoutPosition =
+      textPositionAt(layoutParagraph, sourceOffset) ||
+      (sourceOffset >= layoutParagraph.textContent.length ? endOfElement(layoutParagraph) : null)
     if (!layoutPosition) return null
 
     let beforeOffset = layoutPosition.offset
@@ -127,6 +144,8 @@
       totalLines: beforeLineRects.length + linesAfter,
       linesBefore: beforeLineRects.length,
       linesAfter,
+      // Unlike linesAfter/totalLines, immune to layoutParagraph truncation.
+      hasTextAfter: sourceOffset < paragraph.textContent.length,
     }
   }
 
