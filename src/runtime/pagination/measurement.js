@@ -74,6 +74,18 @@
     return null
   }
 
+  function overflowLinesWithin(overflow, element) {
+    if (!(overflow instanceof Range)) return 0
+
+    const scopedOverflow = overflow.cloneRange()
+    try {
+      scopedOverflow.setEnd(element, element.childNodes.length)
+    } catch {
+      return 0
+    }
+    return lineRects(scopedOverflow).length
+  }
+
   // Firefox detaches source nodes during layout, so measure paged.js's
   // connected clone when available and map corrections back to the source.
   function measureBreak(breakToken, overflow, rendered) {
@@ -97,8 +109,9 @@
     beforeRange.setEnd(layoutPosition.node, beforeOffset)
     const beforeLineRects = lineRects(beforeRange)
 
-    const overflowLineRects = overflow instanceof Range ? lineRects(overflow) : []
-    let linesAfter = overflowLineRects.length
+    // paged.js may extend the overflow range into later elements. Count only
+    // the part belonging to this paragraph or unrelated lines can mask a widow.
+    let linesAfter = overflowLinesWithin(overflow, paragraph)
 
     if (linesAfter === 0) {
       const afterRange = document.createRange()
