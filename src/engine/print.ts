@@ -2,6 +2,12 @@ import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { chromium } from 'playwright'
 
+declare global {
+  interface Window {
+    PAGED_READY?: boolean
+  }
+}
+
 function readPageSize(): { width: string; height: string } {
   const style = getComputedStyle(document.documentElement)
   return {
@@ -11,7 +17,10 @@ function readPageSize(): { width: string; height: string } {
 }
 
 export async function printBooks(slugs: string[], outDir: string) {
-  const browser = await chromium.launch()
+  // paged.js re-fetches stylesheets itself (for its own GCPM parsing pass),
+  // and Chromium treats file:// pages as an opaque origin, so plain XHR/fetch
+  // to local files is blocked by CORS unless this flag is set.
+  const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] })
 
   try {
     for (const slug of slugs) {
@@ -19,6 +28,7 @@ export async function printBooks(slugs: string[], outDir: string) {
 
       await page.goto(pathToFileURL(resolve(outDir, `${slug}.html`)).href)
       await page.emulateMedia({ media: 'print' })
+      await page.waitForFunction(() => window.PAGED_READY === true)
       const { width, height } = await page.evaluate(readPageSize)
       await page.pdf({
         path: resolve(outDir, `${slug}.pdf`),
