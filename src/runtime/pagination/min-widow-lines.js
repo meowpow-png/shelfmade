@@ -1,30 +1,49 @@
 ;(function () {
   const MIN_WIDOW_LINES = 2
-  const { cloneBreakToken, deferToElementStart, measureBreak } = window.PaginationRules
+  const {
+    cloneBreakToken,
+    deferToElementStart,
+    findLineStart,
+    mapTextPosition,
+    measureBreak,
+    trimRenderedContentFrom,
+  } = window.PaginationRules
 
   class MinWidowLines extends window.Paged.Handler {
-    // noinspection JSUnusedGlobalSymbols
-    onBreakToken(breakToken) {
-      const measured = measureBreak(breakToken)
+    onBreakToken(breakToken, overflow, rendered) {
+      const measured = measureBreak(breakToken, overflow, rendered)
       if (!measured) return
 
-      const { paragraph, fullRange, totalLines, linesBefore } = measured
+      const { paragraph, layoutParagraph, beforeLineRects, totalLines, linesBefore, linesAfter } =
+        measured
       if (totalLines < MIN_WIDOW_LINES) return
 
-      const linesAfter = totalLines - linesBefore
       if (linesAfter === 0 || linesAfter >= MIN_WIDOW_LINES) return
 
       const targetLinesBefore = linesBefore - (MIN_WIDOW_LINES - linesAfter)
-      if (targetLinesBefore <= 0) return deferToElementStart(paragraph, breakToken)
+      if (targetLinesBefore <= 0) {
+        if (layoutParagraph !== paragraph) layoutParagraph.remove()
+        return deferToElementStart(paragraph, breakToken)
+      }
 
-      const targetRect = fullRange.getClientRects()[targetLinesBefore]
+      const targetRect = beforeLineRects[targetLinesBefore]
       if (!targetRect) return
 
-      const caret = document.caretPositionFromPoint(
-        targetRect.left + 1,
-        targetRect.top + targetRect.height / 2,
+      const layoutPosition = findLineStart(layoutParagraph, targetRect)
+      if (!layoutPosition) return
+
+      const sourcePosition = mapTextPosition(
+        layoutParagraph,
+        paragraph,
+        layoutPosition.node,
+        layoutPosition.offset,
       )
-      return caret ? cloneBreakToken(breakToken, caret.offsetNode, caret.offset) : undefined
+      if (!sourcePosition) return
+
+      if (layoutParagraph !== paragraph) {
+        trimRenderedContentFrom(layoutParagraph, layoutPosition.node, layoutPosition.offset)
+      }
+      return cloneBreakToken(breakToken, sourcePosition.node, sourcePosition.offset)
     }
   }
 

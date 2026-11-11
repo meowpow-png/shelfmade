@@ -4,8 +4,7 @@
     window.PaginationRules
 
   class KeepHeadingWithParagraph extends window.Paged.Handler {
-    // noinspection JSUnusedGlobalSymbols
-    onBreakToken(breakToken, _overflow, rendered) {
+    onBreakToken(breakToken, overflow, rendered) {
       // A token at offset zero on the paragraph element means paged.js has
       // already deferred the whole paragraph. Pull its heading back too.
       if (
@@ -23,10 +22,10 @@
         return deferToElementStart(heading, breakToken)
       }
 
-      const measured = measureBreak(breakToken)
+      const measured = measureBreak(breakToken, overflow, rendered)
       if (!measured) return
 
-      const { paragraph, totalLines, linesBefore } = measured
+      const { paragraph, layoutParagraph, totalLines, linesBefore } = measured
       if (totalLines < MIN_HEADING_PARAGRAPH_LINES) return
 
       const heading = paragraph.previousElementSibling
@@ -36,6 +35,7 @@
 
       const renderedHeading = renderedElementFor(heading, rendered)
       if (renderedHeading) renderedHeading.remove()
+      if (layoutParagraph !== paragraph) layoutParagraph.remove()
       return deferToElementStart(heading, breakToken)
     }
   }
