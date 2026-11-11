@@ -5,4 +5,4 @@ WORKDIR /workspace
 COPY package-lock.json ./
 COPY docker/playwright/get-playwright-version.sh ./
 
-RUN npx --yes "playwright@$(sh get-playwright-version.sh)" install --with-deps chromium
+RUN npx --yes "playwright@$(sh get-playwright-version.sh)" install --with-deps chromium firefox

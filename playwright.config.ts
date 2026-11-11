@@ -16,5 +16,9 @@ export default defineConfig({
         launchOptions: { args: ['--allow-file-access-from-files'] },
       },
     },
+    {
+      name: 'firefox',
+      use: devices['Desktop Firefox'],
+    },
   ],
 })
