@@ -2,6 +2,8 @@
   --color-ink: #000;
   --color-paper: #fff;
   --color-backdrop: #000;
+  --page-width: 148mm;
+  --page-height: 210mm;
 }
 
 html,
