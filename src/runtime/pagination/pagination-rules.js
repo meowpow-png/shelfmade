@@ -1,23 +1,10 @@
 // Custom paged.js break rules that plain CSS can't express.
 // Paged.js parses `orphans` and `widows`, but does not enforce them during layout.
 ;(function () {
-  const {
-    ProtectParagraphEnding,
-    KeepHeadingWithParagraph,
-    KeepHyphenatedWordTogether,
-    MinWidowLines,
-    MinOrphanLines,
-  } = window.PaginationRules
+  const { ProtectParagraphEnding, BreakTokenDispatch } = window.PaginationRules
 
-  // Handler dispatch stops when a handler returns
-  // a corrected break token, so the specific heading
-  // rule must run before generic paragraph rules.
-  const handlers = [
-    ...(ProtectParagraphEnding ? [ProtectParagraphEnding] : []),
-    KeepHeadingWithParagraph,
-    ...(KeepHyphenatedWordTogether ? [KeepHyphenatedWordTogether] : []),
-    MinWidowLines,
-    MinOrphanLines,
-  ]
+  // BreakTokenDispatch coordinates all break-token rules (break-token-dispatch.js)
+  // so only one rule's mutation runs per break, by explicit priority.
+  const handlers = [...(ProtectParagraphEnding ? [ProtectParagraphEnding] : []), BreakTokenDispatch]
   window.Paged.registerHandlers(...handlers)
 })()

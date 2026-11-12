@@ -24,6 +24,7 @@ ${links}
     <script src="shelfmade/pagination/keep-hyphenated-word-together.js"></script>
     <script src="shelfmade/pagination/min-widow-lines.js"></script>
     <script src="shelfmade/pagination/min-orphan-lines.js"></script>
+    <script src="shelfmade/pagination/break-token-dispatch.js"></script>
     <script src="shelfmade/pagination/pagination-rules.js"></script>
   </head>
   <body>${body}</body>

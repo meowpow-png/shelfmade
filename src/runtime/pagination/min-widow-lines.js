@@ -9,43 +9,54 @@
     trimRenderedContentFrom,
   } = window.PaginationRules
 
-  class MinWidowLines extends window.Paged.Handler {
-    onBreakToken(breakToken, overflow, rendered) {
-      const measured = measureBreak(breakToken, overflow, rendered)
-      if (!measured) return
+  // Pure: computes a correction without mutating anything. Returns
+  // { token, apply } (apply performs the deferred mutation) or undefined.
+  function compute(breakToken, overflow, rendered) {
+    const measured = measureBreak(breakToken, overflow, rendered)
+    if (!measured) return
 
-      const { paragraph, layoutParagraph, beforeLineRects, totalLines, linesBefore, linesAfter } =
-        measured
-      if (totalLines < MIN_WIDOW_LINES) return
+    const { paragraph, layoutParagraph, beforeLineRects, totalLines, linesBefore, linesAfter } =
+      measured
+    if (totalLines < MIN_WIDOW_LINES) return
 
-      if (linesAfter === 0 || linesAfter >= MIN_WIDOW_LINES) return
+    if (linesAfter === 0 || linesAfter >= MIN_WIDOW_LINES) return
 
-      const targetLinesBefore = linesBefore - (MIN_WIDOW_LINES - linesAfter)
-      if (targetLinesBefore <= 0) {
-        if (layoutParagraph !== paragraph) layoutParagraph.remove()
-        return deferToElementStart(paragraph, breakToken)
+    const targetLinesBefore = linesBefore - (MIN_WIDOW_LINES - linesAfter)
+    if (targetLinesBefore <= 0) {
+      const token = deferToElementStart(paragraph, breakToken)
+      if (!token) return
+
+      return {
+        token,
+        apply() {
+          if (layoutParagraph !== paragraph) layoutParagraph.remove()
+        },
       }
+    }
 
-      const targetRect = beforeLineRects[targetLinesBefore]
-      if (!targetRect) return
+    const targetRect = beforeLineRects[targetLinesBefore]
+    if (!targetRect) return
 
-      const layoutPosition = findLineStart(layoutParagraph, targetRect)
-      if (!layoutPosition) return
+    const layoutPosition = findLineStart(layoutParagraph, targetRect)
+    if (!layoutPosition) return
 
-      const sourcePosition = mapTextPosition(
-        layoutParagraph,
-        paragraph,
-        layoutPosition.node,
-        layoutPosition.offset,
-      )
-      if (!sourcePosition) return
+    const sourcePosition = mapTextPosition(
+      layoutParagraph,
+      paragraph,
+      layoutPosition.node,
+      layoutPosition.offset,
+    )
+    if (!sourcePosition) return
 
-      if (layoutParagraph !== paragraph) {
-        trimRenderedContentFrom(layoutParagraph, layoutPosition.node, layoutPosition.offset)
-      }
-      return cloneBreakToken(breakToken, sourcePosition.node, sourcePosition.offset)
+    return {
+      token: cloneBreakToken(breakToken, sourcePosition.node, sourcePosition.offset),
+      apply() {
+        if (layoutParagraph !== paragraph) {
+          trimRenderedContentFrom(layoutParagraph, layoutPosition.node, layoutPosition.offset)
+        }
+      },
     }
   }
 
-  window.PaginationRules.MinWidowLines = MinWidowLines
+  window.PaginationRules.MinWidowLines = { compute }
 })()

@@ -35,48 +35,55 @@
     return /[\u00ad\-\u2010\u2011]/u.test(text.slice(wordStart, wordEnd))
   }
 
-  class KeepHyphenatedWordTogether extends window.Paged.Handler {
-    onBreakToken(breakToken, _overflow, rendered) {
-      if (!breakToken?.node || breakToken.node.nodeType !== Node.TEXT_NODE) return
+  // Pure: computes a correction without mutating anything. Returns
+  // { token, apply } (apply performs the deferred mutation) or undefined.
+  function compute(breakToken, _overflow, rendered) {
+    if (!breakToken?.node || breakToken.node.nodeType !== Node.TEXT_NODE) return
 
-      const measured = measureBreak(breakToken, _overflow, rendered)
-      const paragraph = measured?.paragraph || breakToken.node.parentElement?.closest('p')
-      if (!paragraph) return
+    const measured = measureBreak(breakToken, _overflow, rendered)
+    const paragraph = measured?.paragraph || breakToken.node.parentElement?.closest('p')
+    if (!paragraph) return
 
-      const breakOffset = textOffsetWithin(paragraph, breakToken.node, breakToken.offset)
-      const text = paragraph.textContent
-      if (!isWordPart(text[breakOffset - 1]) || !isWordPart(text[breakOffset])) return
+    const breakOffset = textOffsetWithin(paragraph, breakToken.node, breakToken.offset)
+    const text = paragraph.textContent
+    if (!isWordPart(text[breakOffset - 1]) || !isWordPart(text[breakOffset])) return
 
-      let wordStart = breakOffset
-      while (wordStart > 0 && isWordPart(text[wordStart - 1])) wordStart--
-      if (wordStart === breakOffset) return
-      if (!hasHyphenationMarker(text, wordStart)) return
+    let wordStart = breakOffset
+    while (wordStart > 0 && isWordPart(text[wordStart - 1])) wordStart--
+    if (wordStart === breakOffset) return
+    if (!hasHyphenationMarker(text, wordStart)) return
 
-      const sourcePosition = textPositionAt(paragraph, wordStart)
-      if (!sourcePosition) return
+    const sourcePosition = textPositionAt(paragraph, wordStart)
+    if (!sourcePosition) return
 
-      // Firefox lays out a detached clone. Remove the partial word from that
-      // clone before asking paged.js to resume from the word's source position.
-      const renderedParagraph = measured?.layoutParagraph
-      if (renderedParagraph && renderedParagraph !== paragraph) {
-        const renderedPosition = textPositionAt(renderedParagraph, wordStart)
-        if (!renderedPosition) return
+    // Firefox lays out a detached clone. Remove the partial word from that
+    // clone before asking paged.js to resume from the word's source position.
+    const renderedParagraph = measured?.layoutParagraph
+    if (renderedParagraph && renderedParagraph !== paragraph) {
+      const renderedPosition = textPositionAt(renderedParagraph, wordStart)
+      if (!renderedPosition) return
 
-        const mappedSourcePosition = mapTextPosition(
-          renderedParagraph,
-          paragraph,
-          renderedPosition.node,
-          renderedPosition.offset,
-        )
-        if (!mappedSourcePosition) return
+      const mappedSourcePosition = mapTextPosition(
+        renderedParagraph,
+        paragraph,
+        renderedPosition.node,
+        renderedPosition.offset,
+      )
+      if (!mappedSourcePosition) return
 
-        trimRenderedContentFrom(renderedParagraph, renderedPosition.node, renderedPosition.offset)
-        return cloneBreakToken(breakToken, mappedSourcePosition.node, mappedSourcePosition.offset)
+      return {
+        token: cloneBreakToken(breakToken, mappedSourcePosition.node, mappedSourcePosition.offset),
+        apply() {
+          trimRenderedContentFrom(renderedParagraph, renderedPosition.node, renderedPosition.offset)
+        },
       }
+    }
 
-      return cloneBreakToken(breakToken, sourcePosition.node, sourcePosition.offset)
+    return {
+      token: cloneBreakToken(breakToken, sourcePosition.node, sourcePosition.offset),
+      apply() {},
     }
   }
 
-  window.PaginationRules = { ...window.PaginationRules, KeepHyphenatedWordTogether }
+  window.PaginationRules = { ...window.PaginationRules, KeepHyphenatedWordTogether: { compute } }
 })()

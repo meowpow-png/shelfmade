@@ -4,12 +4,12 @@ import { expect, test } from '@playwright/test'
 declare global {
   interface Window {
     PaginationRules: {
-      MinOrphanLines: new () => {
-        onBreakToken: (
+      MinOrphanLines: {
+        compute: (
           breakToken: { node: Node; offset: number },
           overflow: unknown,
           rendered: Element,
-        ) => { node: Node; offset: number } | undefined
+        ) => { token: { node: Node; offset: number }; apply: () => void } | undefined
       }
     }
   }
@@ -25,7 +25,7 @@ test('MinOrphanLines defers the whole paragraph when handed a truncated in-progr
     const fullText = 'x'.repeat(60)
     const truncatedPrefix = fullText.slice(0, 10)
 
-    // The source paragraph, detached — as it is while paged.js lays it out.
+    // The source paragraph, detached, as it is while paged.js lays it out.
     const paragraph = document.createElement('p')
     paragraph.dataset.ref = 'test-ref'
     paragraph.append(document.createTextNode(fullText))
@@ -40,22 +40,25 @@ test('MinOrphanLines defers the whole paragraph when handed a truncated in-progr
     document.body.append(rendered)
 
     // A break offset past the end of the truncated clone but inside the
-    // full source paragraph — the mismatch that made measureBreak return
-    // null before the fix.
+    // full source paragraph, the exact mismatch that broke measureBreak.
     const breakToken = { node: paragraph.firstChild as Node, offset: 40 }
 
-    const handler = new window.PaginationRules.MinOrphanLines()
-    const corrected = handler.onBreakToken(breakToken, null, rendered)
+    const candidate = window.PaginationRules.MinOrphanLines.compute(breakToken, null, rendered)
+    const cloneRemovedBeforeApply = !clone.isConnected
+    candidate?.apply()
 
     return {
-      corrected: !!corrected,
+      computed: !!candidate,
       correctedIsParagraphStart:
-        corrected?.node === paragraph.firstChild && corrected?.offset === 0,
-      cloneRemoved: !clone.isConnected,
+        candidate?.token.node === paragraph.firstChild && candidate?.token.offset === 0,
+      cloneRemovedBeforeApply,
+      cloneRemovedAfterApply: !clone.isConnected,
     }
   })
 
-  expect(result.corrected).toBe(true)
+  expect(result.computed).toBe(true)
   expect(result.correctedIsParagraphStart).toBe(true)
-  expect(result.cloneRemoved).toBe(true)
+  // compute() must be pure; the mutation only happens once apply() runs.
+  expect(result.cloneRemovedBeforeApply).toBe(false)
+  expect(result.cloneRemovedAfterApply).toBe(true)
 })
