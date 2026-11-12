@@ -9,20 +9,32 @@
     trimRenderedContentFrom,
   } = window.PaginationRules
 
-  // Pure: computes a correction without mutating anything. Returns
-  // { token, apply } (apply performs the deferred mutation) or undefined.
+  // Computes a correction without mutating anything.
+  // Returns { token, apply } (apply performs the deferred mutation) or undefined.
   function compute(breakToken, overflow, rendered) {
     const measured = measureBreak(breakToken, overflow, rendered)
     if (!measured) return
 
-    const { paragraph, layoutParagraph, beforeLineRects, totalLines, linesBefore, linesAfter } =
-      measured
+    const {
+      paragraph,
+      layoutParagraph,
+      beforeLineRects,
+      totalLines,
+      linesBefore,
+      linesAfter,
+      truncated,
+    } = measured
     if (totalLines < MIN_WIDOW_LINES) return
 
     if (linesAfter === 0 || linesAfter >= MIN_WIDOW_LINES) return
 
     const targetLinesBefore = linesBefore - (MIN_WIDOW_LINES - linesAfter)
-    if (targetLinesBefore <= 0) {
+
+    // A truncated render clone doesn't contain the target line yet.
+    // Its lines exist only in the measurement probe, not in the
+    // real clone a fix would trim. Defer the whole paragraph
+    // instead of relocating into content that isn't there.
+    if (targetLinesBefore <= 0 || truncated) {
       const token = deferToElementStart(paragraph, breakToken)
       if (!token) return
 
