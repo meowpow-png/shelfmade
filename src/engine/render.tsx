@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { type ComponentType } from 'react'
@@ -11,7 +11,6 @@ export interface Book {
   title: string
   lang: string
   dir: string
-  stylesheet?: string
   App: ComponentType
 }
 
@@ -28,12 +27,19 @@ export function renderBooks(books: Book[], outDir: string) {
   copyAssets(RUNTIME_DIR, join(outDir, 'shelfmade'))
   copyFileSync(PAGED_POLYFILL, join(outDir, 'shelfmade/vendor/paged.polyfill.min.js'))
 
-  for (const { slug, title, lang, dir, stylesheet, App } of books) {
+  for (const { slug, title, lang, dir, App } of books) {
     const body = renderToStaticMarkup(<App />)
     copyAssets(dir, join(outDir, 'books', slug))
 
-    const stylesheets = ['shelfmade/tokens.css', 'shelfmade/pagination/pagination.css']
-    if (stylesheet) stylesheets.push(`books/${slug}/${stylesheet}`)
+    const bookStylesheets = readdirSync(dir)
+      .filter((file) => file.endsWith('.css'))
+      .sort()
+      .map((file) => `books/${slug}/${file}`)
+    const stylesheets = [
+      'shelfmade/tokens.css',
+      'shelfmade/pagination/pagination.css',
+      ...bookStylesheets,
+    ]
 
     writeFileSync(join(outDir, `${slug}.html`), renderDocument({ title, lang, stylesheets }, body))
   }
