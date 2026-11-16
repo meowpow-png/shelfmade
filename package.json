@@ -23,7 +23,8 @@
   },
   "files": [
     "bin",
-    "dist"
+    "dist",
+    "template"
   ],
   "engines": {
     "node": ">=22.12.0"

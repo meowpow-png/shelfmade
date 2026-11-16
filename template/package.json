@@ -1,0 +1,13 @@
+{
+  "name": "{{slug}}",
+  "private": true,
+  "scripts": {
+    "dev": "shelfmade dev",
+    "build": "shelfmade build",
+    "pdf": "shelfmade pdf"
+  },
+  "devDependencies": {
+    "@types/react": "{{typesReact}}",
+    "shelfmade": "{{shelfmade}}"
+  }
+}

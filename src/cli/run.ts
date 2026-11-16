@@ -3,6 +3,7 @@ import { parseArgs } from 'node:util'
 
 import { build } from '@/cli/build'
 import { dev } from '@/cli/dev'
+import { init } from '@/cli/init'
 import { pdf } from '@/cli/pdf'
 
 const DEFAULT_PORT = 8080
@@ -10,11 +11,13 @@ const DEFAULT_PORT = 8080
 interface CommandOptions {
   root: string
   port: number
+  link: boolean
 }
 
 const COMMANDS: Record<string, (options: CommandOptions) => Promise<unknown>> = {
   build: ({ root }) => build(root),
   dev: ({ root, port }) => dev(root, port),
+  init: async ({ root, link }) => init(root, link),
   pdf: ({ root }) => pdf(root),
 }
 
@@ -23,6 +26,7 @@ const USAGE = `Usage: shelfmade <command> [options]
 Commands:
   build          Render every configured book to HTML
   dev            Serve the books with live reload, rebuilding on every change
+  init [dir]     Create a book project in dir (default: current directory)
   pdf            Render and print every configured book to PDF
 
 Options:
@@ -39,9 +43,13 @@ export async function run(args: string[]) {
         root: { type: 'string' },
         port: { type: 'string' },
         help: { type: 'boolean', short: 'h' },
+        // Undocumented: init links the project to this checkout instead of the published package
+        link: { type: 'boolean' },
       },
     })
-    const [name, ...extra] = positionals
+    const [name, ...rest] = positionals
+    // init also takes its directory as an argument, as other scaffolders do
+    const [dir, ...extra] = name === 'init' ? rest : [undefined, ...rest]
 
     if (values.help) {
       console.log(USAGE)
@@ -64,7 +72,7 @@ export async function run(args: string[]) {
       return
     }
 
-    await command({ root: resolve(values.root ?? '.'), port })
+    await command({ root: resolve(dir ?? values.root ?? '.'), port, link: values.link ?? false })
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error))
   }

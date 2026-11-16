@@ -79,6 +79,13 @@ npm run sample:pdf
 just sample-pdf
 ```
 
+To try `init` before Shelfmade is published, pass `--link`: the new project depends on this checkout through a `file:` link instead of the npm release:
+
+```sh
+npm run build
+node bin/shelfmade.mjs init ../my-book --link
+```
+
 ## Git hooks
 
 Lefthook runs quality checks before every `git push`, so a broken build or failing check never leaves your machine.

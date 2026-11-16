@@ -1,0 +1,36 @@
+body {
+  font-family: georgia, 'Times New Roman', serif;
+  font-size: 11pt;
+  line-height: 16pt;
+  hyphens: auto;
+}
+
+p {
+  margin: 0 0 9pt;
+}
+
+h1 {
+  font-size: 22pt;
+  line-height: 26pt;
+  margin: 0 0 18pt;
+  hyphens: none;
+}
+
+.chapter {
+  break-before: page;
+}
+
+.note {
+  margin: 12pt 0;
+  padding: 9pt 12pt;
+  border-left: 2pt solid #999;
+  background: #f4f4f4;
+}
+
+.note p:last-child {
+  margin-bottom: 0;
+}
+
+@page {
+  margin: 16mm 14mm 18mm;
+}
