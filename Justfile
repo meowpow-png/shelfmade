@@ -17,7 +17,7 @@ claude *args:
 # Run Playwright in Docker container
 [arg("args", help="Command arguments")]
 playwright *args:
-    @docker compose run --rm playwright {{ args }}
+    @docker compose run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp playwright {{ args }}
 
 # Run tests
 test:
