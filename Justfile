@@ -22,3 +22,8 @@ playwright *args:
 # Run tests
 test:
     @just playwright npm test
+
+# Print the sample book project to PDF
+sample-pdf:
+    @npm run sample:install
+    @just playwright npm run sample:pdf

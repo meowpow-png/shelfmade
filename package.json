@@ -30,6 +30,9 @@
     "clean": "rm -rf node_modules dist",
     "build": "tsc && tsc-alias && cp -r src/runtime dist/",
     "test": "playwright test",
+    "sample:install": "npm install --prefix examples/sample-book --no-audit --no-fund --ignore-scripts --silent",
+    "sample": "npm run sample:install && npm run build && cd examples/sample-book && node --import tsx/esm ../../scripts/sample.mts serve",
+    "sample:pdf": "npm run build && cd examples/sample-book && node --import tsx/esm ../../scripts/sample.mts pdf",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:eslint": "eslint .",
@@ -71,6 +74,7 @@
     "stylelint": "^17.14.1",
     "stylelint-config-standard": "^40.0.0",
     "tsc-alias": "^1.9.1",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0"
   }
