@@ -58,6 +58,98 @@ All commands write into `dist/`, which is generated and should be gitignored, on
 - `dist/index.html` — links to every rendered book, for development
 - `dist/<book>.pdf` — the printed PDFs
 
+## Book projects
+
+A book project is a folder with a `shelfmade.config.ts` at its root and one directory per book:
+
+```text
+shelfmade.config.ts
+components/
+books/
+    <slug>/
+        App.tsx
+        *.css
+        content/
+            chapter-1.mdx
+            chapter-2.mdx
+```
+
+### Configuration
+
+```ts
+import { defineConfig } from 'shelfmade'
+
+import * as components from './components'
+import { App } from './books/ebook-1/App'
+import { ZodiacBanner } from './books/ebook-1/ZodiacBanner'
+
+export default defineConfig({
+  lang: 'hr',
+  titlePrefix: 'Slađana Wolf',
+  pageFormat: 'A5',
+  components,
+  books: {
+    'ebook-1': {
+      title: 'Kako horoskop utječe na vaše financije',
+      components: { ZodiacBanner },
+      App,
+    },
+  },
+})
+```
+
+Project-level options apply to every book; a book can override `lang` and `pageFormat`.
+
+| Option        | Level         | Default                 | Description                                                                     |
+| ------------- | ------------- | ----------------------- | ------------------------------------------------------------------------------- |
+| `books`       | project       | —                       | Books keyed by slug; the slug names the output files                            |
+| `titlePrefix` | project       | none                    | Prepended to every book's document title (`<prefix> — <title>`)                 |
+| `components`  | project, book | none                    | Components available to MDX content; a book's map is merged over the shared one |
+| `lang`        | project, book | `'en'`                  | Document language (`<html lang>`)                                               |
+| `pageFormat`  | project, book | `'A5'`                  | `'A4'`, `'A5'`, `'A6'`, `'Letter'` or `{ width, height }` in CSS lengths        |
+| `title`       | book          | —                       | Book title, shown in the document title and the index page                      |
+| `dir`         | book          | `books/<slug>`          | Book directory, relative to the project root                                    |
+| `content`     | book          | `content`               | Chapter directory, relative to the book directory                               |
+| `App`         | book          | one section per chapter | Layout component wrapping the chapters                                          |
+
+### Content
+
+Every `.mdx` file in a book's content directory is a chapter, ordered by filename with numbers compared numerically (`chapter-9` before `chapter-10`). YAML frontmatter is passed to the layout as-is.
+
+MDX files never import components. Every component in the merged `components` map is available in every chapter of that book by name:
+
+```mdx
+---
+chapter: Poglavlje 3
+---
+
+<ZodiacBanner signName="Ovan" element="fire" />
+
+Postoje ljudi koji prije svake veće kupnje…
+```
+
+### Layout
+
+`App` receives the book's `title` and its `chapters`, each with a `slug`, its `frontmatter` and a `Body` component that renders the chapter with components injected:
+
+```tsx
+import { type LayoutProps } from 'shelfmade'
+
+export function App({ title, chapters }: LayoutProps) {
+  return chapters.map(({ slug, frontmatter, Body }) => (
+    <section key={slug} className="chapter" data-chapter={String(frontmatter.chapter)}>
+      <Body />
+    </section>
+  ))
+}
+```
+
+Without `App`, each chapter is rendered in a `<section class="chapter">`.
+
+### Styles and assets
+
+Every `.css` file directly in a book's directory is loaded into that book's document, in filename order, after Shelfmade's own styles. Every other file in the book directory except `.ts`, `.tsx` and `.mdx` is copied to `dist/books/<slug>/`, so assets are referenced as `books/<slug>/<path>`.
+
 ## Adding a new book
 
-Add the book's content and configuration to your book project. No changes to Shelfmade are needed — every command picks up every configured book automatically.
+Add a directory with its content and an entry under `books` in `shelfmade.config.ts`. No changes to Shelfmade are needed — every command picks up every configured book automatically.
