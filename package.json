@@ -15,6 +15,8 @@
   "bin": {
     "shelfmade": "bin/shelfmade.mjs"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -34,6 +36,7 @@
     "prepare": "lefthook install",
     "clean": "rm -rf node_modules dist",
     "build": "tsc && tsc-alias && cp -r src/runtime dist/",
+    "prepack": "rm -rf dist && npm run build",
     "test": "playwright test",
     "sample:install": "npm install --prefix examples/sample-book --no-audit --no-fund --ignore-scripts --silent",
     "sample:build": "npm run build && node bin/shelfmade.mjs build --root examples/sample-book",
