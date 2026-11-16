@@ -1,0 +1,30 @@
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 10.5pt;
+  line-height: 15pt;
+  hyphens: auto;
+}
+
+p {
+  margin: 0;
+  text-indent: 1em;
+}
+
+h1 + p {
+  text-indent: 0;
+}
+
+h1 {
+  font-size: 14pt;
+  line-height: 17pt;
+  margin: 0 0 12pt;
+  hyphens: none;
+}
+
+.chapter {
+  break-before: page;
+}
+
+@page {
+  margin: 14mm 12mm 16mm;
+}
