@@ -60,6 +60,7 @@ The runtime is everything the rendered documents load in the browser: engine tok
 **Rules**
 
 - Runtime files must not depend on Node or on any build step
+- paged.js is pinned to an exact version because the pagination rules depend on its behaviour; upgrade it deliberately and run the pagination tests before releasing
 - Runtime styles define only engine concerns (page size, preview layout); a book's look belongs to its project
 
 ## Editor
