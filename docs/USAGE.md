@@ -5,11 +5,11 @@ Shelfmade turns books built from React components and MDX content into paginated
 There are four commands:
 
 - `init` — create a book project
-- `dev` — open the editor with a live preview
+- `dev` — preview the books with live reload
 - `build` — render each book to HTML
 - `pdf` — print each book to PDF
 
-Every command operates on every book configured in the project in one go, writing separate output files per book.
+Apart from `init`, every command operates on every book configured in the project in one go, writing separate output files per book.
 
 Commands run on the book project in the current directory. Pass `--root <dir>` to run on a project elsewhere; output still goes to that project's `dist/`:
 
@@ -27,7 +27,7 @@ corepack enable npm
 
 Without this, npm falls back to whatever version ships with your installed Node, which can silently drift from the version `package-lock.json` was generated with.
 
-Then install Shelfmade in your book project:
+A project created with `init` (see below) already lists Shelfmade. To add it to an existing book project instead:
 
 ```sh
 npm install --save-dev shelfmade

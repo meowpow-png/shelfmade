@@ -2,7 +2,7 @@
 
 Describe how your book should look, write it yourself or draft it with AI, and get beautifully designed, print-ready books — one title or a whole series.
 
-> **Status:** early development. Nothing here is usable yet; this README describes what Shelfmade is being built to do.
+> **Status:** early development. The command line works: it creates book projects, previews them with live reload and prints them to PDF. The editor and the AI workflow described below are not built yet.
 
 ## What is Shelfmade?
 
@@ -40,19 +40,25 @@ Good-looking books depend on details most tools ignore. Shelfmade's pagination e
 
 Books live in an ordinary folder on your machine — plain text content, design components and a small configuration file. Nothing is locked into a proprietary format or a hosted service: you can open, back up, move or version your books like any other files.
 
-## Planned usage
+## Usage
 
-Shelfmade is distributed as an npm package that a book project installs:
+Shelfmade is distributed as an npm package that a book project installs. Start a new book project with:
 
 ```sh
-npm install --save-dev shelfmade
+npx shelfmade init my-book
+cd my-book
+npm install
 ```
 
+Then, inside the project:
+
 ```sh
-npx shelfmade dev     # open the editor with live preview
+npx shelfmade dev     # preview with live reload (the editor later)
 npx shelfmade build   # render all books
 npx shelfmade pdf     # export print-ready PDFs
 ```
+
+Shelfmade isn't published on npm yet. See [docs/USAGE.md](docs/USAGE.md) for the full guide.
 
 A guided, no-setup version that doesn't require working with folders or commands is a longer-term goal.
 

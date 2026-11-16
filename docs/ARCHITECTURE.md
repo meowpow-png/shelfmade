@@ -18,19 +18,19 @@ src/
     runtime/
     editor/
     index.ts
-templates/
+template/
 ```
 
-| Module       | Responsibility                                                                          |
-| ------------ | --------------------------------------------------------------------------------------- |
-| `bin/`       | Executable entry point; hands off to `cli/`                                             |
-| `cli/`       | Command parsing and the `dev`, `build` and `pdf` commands                               |
-| `config/`    | The book-project contract: `defineConfig`, config loading and its types                 |
-| `engine/`    | Node-side rendering: book discovery, MDX reading, component injection, HTML documents   |
-| `runtime/`   | Plain CSS and JS served to the browser as-is: engine tokens, preview styles, pagination |
-| `editor/`    | The two-pane editor app: content editor, draft preview and paged preview                |
-| `index.ts`   | Public API exported to book projects                                                    |
-| `templates/` | Files scaffolded into book projects: agent instructions and AI skills                   |
+| Module      | Responsibility                                                                          |
+| ----------- | --------------------------------------------------------------------------------------- |
+| `bin/`      | Executable entry point; hands off to `cli/`                                             |
+| `cli/`      | Command parsing and the `init`, `dev`, `build` and `pdf` commands                       |
+| `config/`   | The book-project contract: `defineConfig`, config loading and its types                 |
+| `engine/`   | Node-side rendering: book discovery, MDX reading, component injection, HTML documents   |
+| `runtime/`  | Plain CSS and JS served to the browser as-is: engine tokens, preview styles, pagination |
+| `editor/`   | The two-pane editor app: content editor, draft preview and paged preview                |
+| `index.ts`  | Public API exported to book projects                                                    |
+| `template/` | The starter book project that `init` copies into a new directory                        |
 
 ## Book Projects
 
@@ -65,7 +65,7 @@ The runtime is everything the rendered documents load in the browser: engine tok
 
 ## Editor
 
-The editor is a Vite + React app launched by `shelfmade dev`. Its left pane edits content and design, and its right pane previews the book in one of two modes:
+The editor is planned and not built yet; until then, `shelfmade dev` serves the rendered books with live reload. It will be a Vite + React app launched by `shelfmade dev`. Its left pane edits content and design, and its right pane previews the book in one of two modes:
 
 - **Draft** — continuous scroll without paged.js, fast enough to follow typing
 - **Paged** — exact pagination via the runtime, matching print output
