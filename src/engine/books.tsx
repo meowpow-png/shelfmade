@@ -4,12 +4,13 @@ import { basename, join, resolve } from 'node:path'
 import { readMdx } from '@/engine/mdx'
 import { resolvePageSize } from '@/engine/page-format'
 import { type Book } from '@/engine/render'
-import { type Chapter, type LayoutProps, type ShelfmadeConfig } from '@/config'
+import { type Chapter, type Components, type LayoutProps, type ShelfmadeConfig } from '@/config'
 
 export function resolveBooks(config: ShelfmadeConfig, root: string): Book[] {
   return Object.entries(config.books).map(([slug, book]) => {
     const dir = resolve(root, book.dir ?? join('books', slug))
-    const chapters = readChapters(resolve(dir, book.content ?? 'content'))
+    const components = { ...config.components, ...book.components }
+    const chapters = readChapters(resolve(dir, book.content ?? 'content'), components)
     const Layout = book.App ?? DefaultLayout
 
     return {
@@ -24,7 +25,7 @@ export function resolveBooks(config: ShelfmadeConfig, root: string): Book[] {
   })
 }
 
-function readChapters(contentDir: string): Chapter[] {
+function readChapters(contentDir: string, components: Components): Chapter[] {
   return (
     readdirSync(contentDir)
       .filter((file) => file.endsWith('.mdx'))
@@ -36,7 +37,7 @@ function readChapters(contentDir: string): Chapter[] {
         return {
           slug: basename(file, '.mdx'),
           frontmatter: (frontmatter ?? {}) as Chapter['frontmatter'],
-          Body: Content,
+          Body: () => <Content components={components} />,
         }
       })
   )
