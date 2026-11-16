@@ -5,11 +5,14 @@ import { type ComponentType } from 'react'
 
 import { copyAssets } from '@/engine/assets'
 import { renderDocument, renderIndex } from '@/engine/document'
+import { type PageSize } from '@/engine/page-format'
 
 export interface Book {
   slug: string
   title: string
+  documentTitle: string
   lang: string
+  pageSize: PageSize
   dir: string
   App: ComponentType
 }
@@ -27,21 +30,19 @@ export function renderBooks(books: Book[], outDir: string) {
   copyAssets(RUNTIME_DIR, join(outDir, 'shelfmade'))
   copyFileSync(PAGED_POLYFILL, join(outDir, 'shelfmade/vendor/paged.polyfill.min.js'))
 
-  for (const { slug, title, lang, dir, App } of books) {
+  for (const { slug, documentTitle, lang, pageSize, dir, App } of books) {
     const body = renderToStaticMarkup(<App />)
     copyAssets(dir, join(outDir, 'books', slug))
 
-    const bookStylesheets = readdirSync(dir)
+    const stylesheets = readdirSync(dir)
       .filter((file) => file.endsWith('.css'))
       .sort()
       .map((file) => `books/${slug}/${file}`)
-    const stylesheets = [
-      'shelfmade/tokens.css',
-      'shelfmade/pagination/pagination.css',
-      ...bookStylesheets,
-    ]
 
-    writeFileSync(join(outDir, `${slug}.html`), renderDocument({ title, lang, stylesheets }, body))
+    writeFileSync(
+      join(outDir, `${slug}.html`),
+      renderDocument({ title: documentTitle, lang, pageSize, stylesheets }, body),
+    )
   }
 
   const index = renderToStaticMarkup(

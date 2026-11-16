@@ -1,10 +1,16 @@
+import { type PageSize } from '@/engine/page-format'
+
 interface DocumentOptions {
   title: string
   lang: string
+  pageSize: PageSize
   stylesheets: string[]
 }
 
-export function renderDocument({ title, lang, stylesheets }: DocumentOptions, body: string) {
+export function renderDocument(
+  { title, lang, pageSize, stylesheets }: DocumentOptions,
+  body: string,
+) {
   const links = stylesheets.map((href) => `    <link rel="stylesheet" href="${href}" />`).join('\n')
 
   return `<!doctype html>
@@ -12,6 +18,9 @@ export function renderDocument({ title, lang, stylesheets }: DocumentOptions, bo
   <head>
     <meta charset="UTF-8" />
     <title>${title}</title>
+    <link rel="stylesheet" href="shelfmade/tokens.css" />
+    <link rel="stylesheet" href="shelfmade/pagination/pagination.css" />
+    <style>${renderPageSize(pageSize)}</style>
 ${links}
     <link rel="stylesheet" href="shelfmade/preview.css" media="screen" />
     <script>window.PagedConfig = { after: () => { window.PAGED_READY = true } };</script>
@@ -45,4 +54,10 @@ export function renderIndex(body: string) {
   </body>
 </html>
 `
+}
+
+// The page size sits between the runtime and book stylesheets, so it overrides
+// the runtime's A5 default while the book's stylesheets can still override it
+function renderPageSize({ width, height }: PageSize) {
+  return `:root { --page-width: ${width}; --page-height: ${height}; } @page { size: ${width} ${height}; }`
 }
