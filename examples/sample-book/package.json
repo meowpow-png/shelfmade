@@ -1,7 +1,6 @@
 {
   "name": "shelfmade-sample-book",
   "private": true,
-  "type": "module",
   "devDependencies": {
     "shelfmade": "file:../.."
   }

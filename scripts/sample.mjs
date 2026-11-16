@@ -3,15 +3,13 @@
 import { createReadStream, existsSync, statSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join, resolve } from 'node:path'
-import { printBooks, renderBooks, resolveBooks } from 'shelfmade'
-
-import config from '../examples/sample-book/shelfmade.config.ts'
+import { loadConfig, printBooks, renderBooks, resolveBooks } from 'shelfmade'
 
 const ROOT = resolve(import.meta.dirname, '../examples/sample-book')
 const OUT_DIR = join(ROOT, 'dist')
 const PORT = 8080
 
-const CONTENT_TYPES: Record<string, string> = {
+const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -39,6 +37,7 @@ function serve() {
 }
 
 async function main() {
+  const { config } = await loadConfig(ROOT)
   const books = resolveBooks(config, ROOT)
   renderBooks(books, OUT_DIR)
   console.log(`Rendered ${books.length} books to ${OUT_DIR}`)
@@ -54,7 +53,7 @@ async function main() {
   }
 }
 
-main().catch((error: unknown) => {
+main().catch((error) => {
   console.error(error)
   process.exitCode = 1
 })

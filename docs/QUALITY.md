@@ -72,7 +72,7 @@ Print it to PDF in the Playwright container, writing into `examples/sample-book/
 just sample-pdf
 ```
 
-Both run through `scripts/sample.mts`, a temporary stand-in until the CLI exists. It renders once; rerun it after a change.
+Both run through `scripts/sample.mjs`, a temporary stand-in until the CLI exists. It renders once; rerun it after a change.
 
 ## Git hooks
 
