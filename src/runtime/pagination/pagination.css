@@ -19,8 +19,11 @@ h6 {
   background-color: var(--color-paper);
 }
 
+/* Covers headings placed directly in the book body and headings wrapped in one
+   container, like a layout's chapter <section> */
 .pagedjs_page_content > h2:first-child,
-.pagedjs_page_content > :first-child > h2:first-child {
+.pagedjs_page_content > :first-child > h2:first-child,
+.pagedjs_page_content > :first-child > :first-child > h2:first-child {
   margin-top: 0;
 }
 
