@@ -1,4 +1,5 @@
 export { defineConfig } from '@/config/define-config'
+export { loadConfig, type LoadedConfig } from '@/config/load-config'
 export type {
   BookConfig,
   Chapter,

@@ -1,10 +1,11 @@
-export { defineConfig } from '@/config'
+export { defineConfig, loadConfig } from '@/config'
 export type {
   BookConfig,
   Chapter,
   Components,
   Frontmatter,
   LayoutProps,
+  LoadedConfig,
   PageFormat,
   ShelfmadeConfig,
 } from '@/config'

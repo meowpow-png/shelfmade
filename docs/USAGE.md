@@ -146,6 +146,12 @@ export function App({ title, chapters }: LayoutProps) {
 
 Without `App`, each chapter is rendered in a `<section class="chapter">`.
 
+### Code
+
+Shelfmade compiles `shelfmade.config.ts` and every component it imports itself, so a book project has no build step. Book projects don't install React: every `react` import uses Shelfmade's own copy. Install `@types/react` as a dev dependency for editor type checking. Any other package a component imports must be installed in the book project.
+
+Components can't import CSS yet; put stylesheets in the book directory instead.
+
 ### Styles and assets
 
 Every `.css` file directly in a book's directory is loaded into that book's document, in filename order, after Shelfmade's own styles. Every other file in the book directory except `.ts`, `.tsx` and `.mdx` is copied to `dist/books/<slug>/`, so assets are referenced as `books/<slug>/<path>`.
