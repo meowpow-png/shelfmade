@@ -1,5 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/runtime/pagination/*.js", "scripts/*.mjs"],
+  "entry": ["src/runtime/pagination/*.js"],
   "ignore": ["examples/**"]
 }

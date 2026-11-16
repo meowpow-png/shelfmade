@@ -60,7 +60,7 @@ npm run knip
 
 ## Sample book
 
-`examples/sample-book/` is a book project structured like a real one, linked to this repository with a `file:` dependency. Render it and preview it at `http://localhost:8080`:
+`examples/sample-book/` is a book project structured like a real one, linked to this repository with a `file:` dependency. Preview it at `http://localhost:8080` with live reload:
 
 ```sh
 npm run sample
@@ -78,8 +78,6 @@ Print it to PDF, on your machine or in the Playwright container, writing into `e
 npm run sample:pdf
 just sample-pdf
 ```
-
-`npm run sample` runs through `scripts/sample.mjs`, a temporary stand-in until `shelfmade dev` exists. It renders once; rerun it after a change.
 
 ## Git hooks
 

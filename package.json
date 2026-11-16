@@ -36,7 +36,7 @@
     "test": "playwright test",
     "sample:install": "npm install --prefix examples/sample-book --no-audit --no-fund --ignore-scripts --silent",
     "sample:build": "npm run build && node bin/shelfmade.mjs build --root examples/sample-book",
-    "sample": "npm run sample:install && npm run build && node scripts/sample.mjs serve",
+    "sample": "npm run sample:install && npm run build && node bin/shelfmade.mjs dev --root examples/sample-book",
     "sample:pdf": "npm run build && node bin/shelfmade.mjs pdf --root examples/sample-book",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
