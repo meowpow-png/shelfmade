@@ -32,12 +32,21 @@ function readChapters(contentDir: string, components: Components): Chapter[] {
       // Numeric collation keeps chapter-10 after chapter-9
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
       .map((file) => {
-        const { default: Content, frontmatter } = readMdx(join(contentDir, file))
+        const path = join(contentDir, file)
+        const { default: Content, frontmatter } = readMdx(path)
 
         return {
           slug: basename(file, '.mdx'),
           frontmatter: (frontmatter ?? {}) as Chapter['frontmatter'],
-          Body: () => <Content components={components} />,
+          // Called directly rather than rendered as <Content />, so errors MDX
+          // raises while rendering (like a missing component) name the chapter
+          Body: () => {
+            try {
+              return Content({ components })
+            } catch (error) {
+              throw new Error(`${path}: ${error instanceof Error ? error.message : String(error)}`)
+            }
+          },
         }
       })
   )

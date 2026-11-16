@@ -7,10 +7,14 @@ import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 export function readMdx(path: string) {
   const source = readFileSync(path, 'utf-8')
 
-  return evaluateSync(source, {
-    Fragment,
-    jsx,
-    jsxs,
-    remarkPlugins: [remarkFrontmatter, [remarkMdxFrontmatter, { name: 'frontmatter' }]],
-  })
+  try {
+    return evaluateSync(source, {
+      Fragment,
+      jsx,
+      jsxs,
+      remarkPlugins: [remarkFrontmatter, [remarkMdxFrontmatter, { name: 'frontmatter' }]],
+    })
+  } catch (error) {
+    throw new Error(`${path}: ${error instanceof Error ? error.message : String(error)}`)
+  }
 }
