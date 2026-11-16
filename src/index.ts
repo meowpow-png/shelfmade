@@ -7,6 +7,6 @@ export type {
   PageFormat,
   ShelfmadeConfig,
 } from '@/config'
-export { readMdx } from '@/engine/mdx'
+export { resolveBooks } from '@/engine/books'
 export { printBooks } from '@/engine/print'
-export { renderBooks, type Book } from '@/engine/render'
+export { renderBooks } from '@/engine/render'
