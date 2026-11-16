@@ -1,3 +1,4 @@
+export { defineConfig } from '@/config/define-config'
 export type {
   BookConfig,
   Chapter,
