@@ -1,5 +1,6 @@
-import { join, relative } from 'node:path'
+import { join } from 'node:path'
 
+import { displayPath } from '@/cli/display-path'
 import { loadConfig } from '@/config'
 import { resolveBooks } from '@/engine/books'
 import { renderBooks } from '@/engine/render'
@@ -11,9 +12,6 @@ export async function build(root: string) {
 
   renderBooks(books, outDir)
   console.log(`Rendered ${books.length} book(s) to ${displayPath(outDir)}`)
-}
 
-function displayPath(path: string) {
-  const relativePath = relative(process.cwd(), path)
-  return relativePath.startsWith('..') ? path : relativePath
+  return { books, outDir }
 }

@@ -1,9 +1,9 @@
-// Temporary stand-in for the Phase 5 CLI: renders the sample book project,
-// then either serves it for preview or prints it to PDF.
+// Temporary stand-in for `shelfmade dev`: renders the sample book project,
+// then serves it for preview.
 import { createReadStream, existsSync, statSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join, resolve } from 'node:path'
-import { loadConfig, printBooks, renderBooks, resolveBooks } from 'shelfmade'
+import { loadConfig, renderBooks, resolveBooks } from 'shelfmade'
 
 const ROOT = resolve(import.meta.dirname, '../examples/sample-book')
 const OUT_DIR = join(ROOT, 'dist')
@@ -44,12 +44,6 @@ async function main() {
 
   if (process.argv[2] === 'serve') {
     serve()
-  } else if (process.argv[2] === 'pdf') {
-    await printBooks(
-      books.map(({ slug }) => slug),
-      OUT_DIR,
-    )
-    console.log(`Printed ${books.length} books`)
   }
 }
 

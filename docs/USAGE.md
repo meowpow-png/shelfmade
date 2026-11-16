@@ -56,6 +56,16 @@ npx shelfmade pdf
 
 This does the same render, then prints every book using headless Chromium via Playwright.
 
+The first run downloads Chromium once (about 300 MB unpacked) into Playwright's per-user cache, `~/.cache/ms-playwright/` on Linux; nothing is installed system-wide. Later runs reuse it. If the download fails, for example offline, install it manually and run `pdf` again:
+
+```sh
+npx playwright install chromium --only-shell
+```
+
+On Linux, Chromium needs common desktop libraries (NSS, GTK accessibility, X11, Mesa). If one is missing, the error names it; install it with your system's package manager.
+
+Text is laid out with the fonts available to Chromium. For identical PDFs on every machine, ship a book's fonts in its directory instead of relying on system fonts.
+
 ## Output
 
 All commands write into `dist/`, which is generated and should be gitignored, one file per book:

@@ -72,13 +72,14 @@ Render it with the CLI only, without serving:
 npm run sample:build
 ```
 
-Print it to PDF in the Playwright container, writing into `examples/sample-book/dist/`:
+Print it to PDF, on your machine or in the Playwright container, writing into `examples/sample-book/dist/`:
 
 ```sh
+npm run sample:pdf
 just sample-pdf
 ```
 
-Both run through `scripts/sample.mjs`, a temporary stand-in until the CLI exists. It renders once; rerun it after a change.
+`npm run sample` runs through `scripts/sample.mjs`, a temporary stand-in until `shelfmade dev` exists. It renders once; rerun it after a change.
 
 ## Git hooks
 

@@ -2,13 +2,15 @@ import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 
 import { build } from '@/cli/build'
+import { pdf } from '@/cli/pdf'
 
-const COMMANDS: Record<string, (root: string) => Promise<void>> = { build }
+const COMMANDS: Record<string, (root: string) => Promise<unknown>> = { build, pdf }
 
 const USAGE = `Usage: shelfmade <command> [options]
 
 Commands:
   build          Render every configured book to HTML
+  pdf            Render and print every configured book to PDF
 
 Options:
   --root <dir>   Book project directory (default: current directory)
