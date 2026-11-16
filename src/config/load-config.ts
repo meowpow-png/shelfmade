@@ -5,7 +5,7 @@ import { build, type Loader, type Plugin } from 'esbuild'
 
 import { type ShelfmadeConfig } from '@/config/types'
 
-const CONFIG_FILE = 'shelfmade.config.ts'
+export const CONFIG_FILE = 'shelfmade.config.ts'
 
 // Imports of these always resolve to Shelfmade's own copies, so a book project
 // renders with exactly one React no matter how Shelfmade is installed

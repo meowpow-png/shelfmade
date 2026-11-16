@@ -2,18 +2,32 @@ import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 
 import { build } from '@/cli/build'
+import { dev } from '@/cli/dev'
 import { pdf } from '@/cli/pdf'
 
-const COMMANDS: Record<string, (root: string) => Promise<unknown>> = { build, pdf }
+const DEFAULT_PORT = 8080
+
+interface CommandOptions {
+  root: string
+  port: number
+}
+
+const COMMANDS: Record<string, (options: CommandOptions) => Promise<unknown>> = {
+  build: ({ root }) => build(root),
+  dev: ({ root, port }) => dev(root, port),
+  pdf: ({ root }) => pdf(root),
+}
 
 const USAGE = `Usage: shelfmade <command> [options]
 
 Commands:
   build          Render every configured book to HTML
+  dev            Serve the books with live reload, rebuilding on every change
   pdf            Render and print every configured book to PDF
 
 Options:
   --root <dir>   Book project directory (default: current directory)
+  --port <n>     Port for dev (default: ${DEFAULT_PORT})
   -h, --help     Show this help`
 
 export async function run(args: string[]) {
@@ -23,6 +37,7 @@ export async function run(args: string[]) {
       allowPositionals: true,
       options: {
         root: { type: 'string' },
+        port: { type: 'string' },
         help: { type: 'boolean', short: 'h' },
       },
     })
@@ -43,7 +58,13 @@ export async function run(args: string[]) {
       return
     }
 
-    await command(resolve(values.root ?? '.'))
+    const port = Number(values.port ?? DEFAULT_PORT)
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      fail(`Invalid port: ${values.port}`)
+      return
+    }
+
+    await command({ root: resolve(values.root ?? '.'), port })
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error))
   }

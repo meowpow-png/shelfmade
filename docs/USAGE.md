@@ -38,7 +38,9 @@ npm install --save-dev shelfmade
 npx shelfmade dev
 ```
 
-Opens the editor: content and design on the left, a live preview on the right. The preview switches between a fast draft view that follows your typing and an exact paged view that matches print output.
+Builds every book, serves them at `http://localhost:8080` and rebuilds whenever a file in the book project changes; open pages reload by themselves. Use `--port <n>` for another port. If a change breaks the build, the error is printed and the browser keeps the last good version until the next save fixes it.
+
+A two-pane editor will replace this preview: content and design on the left, a live preview on the right, switching between a fast draft view that follows your typing and an exact paged view that matches print output.
 
 ## Rendering to HTML
 
