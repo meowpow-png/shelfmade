@@ -10,6 +10,12 @@ There are three commands:
 
 Every command operates on every book configured in the project in one go, writing separate output files per book.
 
+Commands run on the book project in the current directory. Pass `--root <dir>` to run on a project elsewhere; output still goes to that project's `dist/`:
+
+```sh
+npx shelfmade build --root ../my-books
+```
+
 ## Setup
 
 Enable Corepack once per environment, so npm matches the version pinned in your project's `package.json` `packageManager` field:

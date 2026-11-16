@@ -66,6 +66,12 @@ npm run knip
 npm run sample
 ```
 
+Render it with the CLI only, without serving:
+
+```sh
+npm run sample:build
+```
+
 Print it to PDF in the Playwright container, writing into `examples/sample-book/dist/`:
 
 ```sh

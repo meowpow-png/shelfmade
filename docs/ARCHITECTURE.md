@@ -10,7 +10,7 @@ Adding a new book means adding content and configuration to a book project, not 
 
 ```text
 bin/
-    shelfmade.js
+    shelfmade.mjs
 src/
     cli/
     config/

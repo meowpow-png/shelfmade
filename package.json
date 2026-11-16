@@ -12,6 +12,9 @@
     "pagination",
     "ai"
   ],
+  "bin": {
+    "shelfmade": "bin/shelfmade.mjs"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,6 +22,7 @@
     }
   },
   "files": [
+    "bin",
     "dist"
   ],
   "engines": {
@@ -31,6 +35,7 @@
     "build": "tsc && tsc-alias && cp -r src/runtime dist/",
     "test": "playwright test",
     "sample:install": "npm install --prefix examples/sample-book --no-audit --no-fund --ignore-scripts --silent",
+    "sample:build": "npm run build && node bin/shelfmade.mjs build --root examples/sample-book",
     "sample": "npm run sample:install && npm run build && node scripts/sample.mjs serve",
     "sample:pdf": "npm run build && node scripts/sample.mjs pdf",
     "format": "prettier --write .",
