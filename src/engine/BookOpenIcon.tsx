@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const SVG = readFileSync(resolve(__dirname, 'book-open.svg'), 'utf-8')
+const SVG = readFileSync(resolve(__dirname, '../assets/icons/book-open.svg'), 'utf-8')
 
 interface BookOpenIconProps {
   className?: string

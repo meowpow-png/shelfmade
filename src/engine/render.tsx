@@ -5,7 +5,7 @@ import { type ComponentType } from 'react'
 
 import { copyAssets } from '@/engine/assets'
 import { renderDocument, renderIndex } from '@/engine/document'
-import { BookOpenIcon } from '@/engine/icons/BookOpenIcon'
+import { BookOpenIcon } from '@/engine/BookOpenIcon'
 import { type PageSize } from '@/engine/page-format'
 
 export interface Book {
