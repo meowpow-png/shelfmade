@@ -36,7 +36,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for where things stand.
 
 ## Usage
 
-Shelfmade is distributed as an npm package that a book project installs. Start a new book project with:
+Shelfmade is distributed as an [npm package](https://www.npmjs.com/package/shelfmade) that a book project installs. Start a new book project with:
 
 ```sh
 npx shelfmade init my-book

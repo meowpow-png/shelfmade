@@ -27,7 +27,7 @@ corepack enable npm
 
 Without this, npm falls back to whatever version ships with your installed Node, which can silently drift from the version `package-lock.json` was generated with.
 
-A project created with `init` (see below) already lists Shelfmade. To add it to an existing book project instead:
+A project created with `init` (see below) already lists [Shelfmade](https://www.npmjs.com/package/shelfmade). To add it to an existing book project instead:
 
 ```sh
 npm install --save-dev shelfmade
