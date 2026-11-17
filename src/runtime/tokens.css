@@ -1,0 +1,21 @@
+:root {
+  --color-ink: #000;
+  --color-paper: #fff;
+  --color-backdrop: #000;
+  --page-width: 148mm;
+  --page-height: 210mm;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  color: var(--color-ink);
+  background: var(--color-backdrop);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

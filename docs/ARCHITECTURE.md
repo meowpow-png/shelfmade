@@ -1,8 +1,8 @@
 # Architecture
 
-Shelfmade is a single npm package that a book project installs as a dev dependency. It ships a CLI, the rendering engine, the browser-side pagination runtime and the editor. A book project contains only its content, design components and configuration; it never contains pipeline code.
+Shelfmade is a single npm package that a book project installs as a dev dependency. It ships a CLI, the rendering engine and the browser-side pagination runtime. A book project contains only its content, design components and configuration; it never contains pipeline code.
 
-Books are rendered via `react-dom/server` to static HTML, paginated in the browser by paged.js, and printed to PDF by Playwright. The editor is the only part with a client runtime.
+Books are rendered via `react-dom/server` to static HTML, paginated in the browser by paged.js, and printed to PDF by Playwright.
 
 Adding a new book means adding content and configuration to a book project, not changing Shelfmade.
 
@@ -10,27 +10,25 @@ Adding a new book means adding content and configuration to a book project, not 
 
 ```text
 bin/
-    shelfmade.js
+    shelfmade.mjs
 src/
     cli/
     config/
     engine/
     runtime/
-    editor/
     index.ts
-templates/
+template/
 ```
 
-| Module       | Responsibility                                                                          |
-| ------------ | --------------------------------------------------------------------------------------- |
-| `bin/`       | Executable entry point; hands off to `cli/`                                             |
-| `cli/`       | Command parsing and the `dev`, `build` and `pdf` commands                               |
-| `config/`    | The book-project contract: `defineConfig`, config loading and its types                 |
-| `engine/`    | Node-side rendering: book discovery, MDX reading, component injection, HTML documents   |
-| `runtime/`   | Plain CSS and JS served to the browser as-is: engine tokens, preview styles, pagination |
-| `editor/`    | The two-pane editor app: content editor, draft preview and paged preview                |
-| `index.ts`   | Public API exported to book projects                                                    |
-| `templates/` | Files scaffolded into book projects: agent instructions and AI skills                   |
+| Module      | Responsibility                                                                          |
+| ----------- | --------------------------------------------------------------------------------------- |
+| `bin/`      | Executable entry point; hands off to `cli/`                                             |
+| `cli/`      | Command parsing and the `init`, `dev`, `build` and `pdf` commands                       |
+| `config/`   | The book-project contract: `defineConfig`, config loading and its types                 |
+| `engine/`   | Node-side rendering: book discovery, MDX reading, component injection, HTML documents   |
+| `runtime/`  | Plain CSS and JS served to the browser as-is: engine tokens, preview styles, pagination |
+| `index.ts`  | Public API exported to book projects                                                    |
+| `template/` | The starter book project that `init` copies into a new directory                        |
 
 ## Book Projects
 
@@ -46,11 +44,11 @@ Shelfmade discovers books and their content by convention from the configuration
 
 ## Engine
 
-The engine turns a book project into one static HTML document per book. It reads the configuration, discovers each book's chapters, renders them with the project's components injected, and wraps the result in a document that loads the runtime.
+The engine turns a book project into one static HTML document per book, plus an index page linking to them. It reads the configuration, discovers each book's chapters, renders them with the project's components injected, and wraps the result in a document that loads the runtime.
 
 **Rules**
 
-- The engine must not depend on `cli/` or `editor/`
+- The engine must not depend on `cli/`
 - Every book-specific value (title, language, page format, stylesheets) comes from configuration
 
 ## Runtime
@@ -60,11 +58,12 @@ The runtime is everything the rendered documents load in the browser: engine tok
 **Rules**
 
 - Runtime files must not depend on Node or on any build step
+- paged.js is pinned to an exact version because the pagination rules depend on its behaviour; upgrade it deliberately and run the pagination tests before releasing
 - Runtime styles define only engine concerns (page size, preview layout); a book's look belongs to its project
 
 ## Editor
 
-The editor is a Vite + React app launched by `shelfmade dev`. Its left pane edits content and design, and its right pane previews the book in one of two modes:
+The editor is planned and not built yet; until then, `shelfmade dev` serves the rendered books with live reload. It will be a Vite + React app launched by `shelfmade dev`. Its left pane edits content and design, and its right pane previews the book in one of two modes:
 
 - **Draft** — continuous scroll without paged.js, fast enough to follow typing
 - **Paged** — exact pagination via the runtime, matching print output
@@ -98,10 +97,6 @@ bin
     ↓
 cli
     ↓
-editor, engine, config
-
-editor
-    ↓
 engine, config
 
 engine
@@ -116,6 +111,5 @@ config
 **Rules**
 
 - `config/` must not depend on any other module
-- `engine/` must not depend on `editor/` or `cli/`
-- `editor/` must not depend on `cli/`
+- `engine/` must not depend on `cli/`
 - `runtime/` is loaded by rendered documents, never imported by TypeScript modules

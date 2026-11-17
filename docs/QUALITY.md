@@ -44,7 +44,7 @@ npm run typecheck
 
 ## Build
 
-The build script runs `tsc` then `tsc-alias`, so it doubles as a check that path aliases resolve correctly, not just that types are valid:
+The build script runs `tsc`, then `tsc-alias`, then copies `src/runtime` into `dist/runtime`. So it doubles as a check that path aliases resolve correctly, not just that types are valid, and it's also what makes the published package runnable: the engine loads the runtime's pagination rules and styles from that copied output.
 
 ```sh
 npm run build
@@ -56,6 +56,34 @@ Knip is used for flagging unused files, exports, and dependencies. No auto-fix h
 
 ```sh
 npm run knip
+```
+
+## Sample book
+
+`examples/sample-book/` is a book project structured like a real one, linked to this repository with a `file:` dependency. Preview it at `http://localhost:8080` with live reload:
+
+```sh
+npm run sample
+```
+
+Render it with the CLI only, without serving:
+
+```sh
+npm run sample:build
+```
+
+Print it to PDF, on your machine or in the Playwright container, writing into `examples/sample-book/dist/`:
+
+```sh
+npm run sample:pdf
+just sample-pdf
+```
+
+To try `init` before Shelfmade is published, pass `--link`: the new project depends on this checkout through a `file:` link instead of the npm release:
+
+```sh
+npm run build
+node bin/shelfmade.mjs init ../my-book --link
 ```
 
 ## Git hooks

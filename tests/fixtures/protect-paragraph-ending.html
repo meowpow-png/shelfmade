@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ProtectParagraphEnding fixture</title>
+    <link rel="stylesheet" href="../../src/runtime/pagination/pagination.css" />
+    <link rel="stylesheet" href="protect-paragraph-ending.css" />
+    <script>
+      window.PagedConfig = {
+        after: () => {
+          window.PAGED_READY = true
+        },
+      }
+    </script>
+    <script src="../../node_modules/pagedjs/dist/paged.polyfill.min.js"></script>
+    <script src="../../src/runtime/pagination/break-token.js"></script>
+    <script src="../../src/runtime/pagination/measurement.js"></script>
+    <script src="../../src/runtime/pagination/rendered-elements.js"></script>
+    <script src="../../src/runtime/pagination/protect-paragraph-ending.js"></script>
+    <script src="../../src/runtime/pagination/keep-heading-with-paragraph.js"></script>
+    <script src="../../src/runtime/pagination/min-widow-lines.js"></script>
+    <script src="../../src/runtime/pagination/min-orphan-lines.js"></script>
+    <script src="../../src/runtime/pagination/break-token-dispatch.js"></script>
+    <script src="../../src/runtime/pagination/pagination-rules.js"></script>
+  </head>
+  <body>
+    <p id="short-ending">Prva druga treca <span class="previous-word">posljednja</span> je</p>
+    <p id="hyphenated-ending">Ovo rjesenje ostaje naj&shy;jednostavnije</p>
+    <p id="long-ending">Ostaje ovdje zauvijek.</p>
+  </body>
+</html>

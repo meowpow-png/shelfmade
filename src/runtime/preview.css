@@ -1,0 +1,7 @@
+/* Loaded with <link media="screen">: paged.js removes and
+   reprocesses  every other stylesheet it finds, discarding
+   non-print media queries in the process, so screen-only cosmetics
+   (like this inter-page gap) have to live in a stylesheet it never touches. */
+.pagedjs_page {
+  margin-bottom: 4mm;
+}

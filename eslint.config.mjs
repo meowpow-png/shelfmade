@@ -9,13 +9,24 @@ import { defineConfig } from 'eslint/config'
 
 export default defineConfig([
   {
-    ignores: ['.claude/**', '.codex/**', '.mipe/**', 'dist/**', 'node_modules/**'],
+    ignores: [
+      '.claude/**',
+      '.codex/**',
+      '.mipe/**',
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/test-results/**',
+    ],
   },
   {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     plugins: { js },
     extends: ['js/recommended'],
     languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    files: ['src/runtime/pagination/**/*.js'],
+    languageOptions: { globals: { ...globals.browser } },
   },
   {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],

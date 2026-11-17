@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 210">
+  <rect width="148" height="210" fill="#2f6b74" />
+  <path d="M0 150 Q37 135 74 150 T148 150 V210 H0 Z" fill="#245760" />
+  <path d="M0 165 Q37 152 74 165 T148 165 V210 H0 Z" fill="#1b464e" />
+  <circle cx="108" cy="56" r="16" fill="#f2d49b" />
+  <text x="16" y="96" fill="#fff" font-family="Georgia, serif" font-size="13">Field Notes</text>
+  <text x="16" y="112" fill="#fff" font-family="Georgia, serif" font-size="9">from a Small Coast</text>
+</svg>

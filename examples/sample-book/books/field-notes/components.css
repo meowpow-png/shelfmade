@@ -1,0 +1,39 @@
+.pull-quote {
+  margin: 14pt 0;
+  padding: 0 8mm;
+  break-inside: avoid;
+}
+
+.pull-quote-text {
+  margin: 0;
+  font-size: 14pt;
+  line-height: 19pt;
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.pull-quote-source {
+  margin-top: 6pt;
+  font-size: 9pt;
+  color: var(--color-muted);
+}
+
+.sidebar {
+  margin: 12pt 0;
+  padding: 8pt 10pt;
+  border-left: 2pt solid var(--color-accent);
+  background: #eef4f4;
+  font-size: 9.5pt;
+  line-height: 13pt;
+  break-inside: avoid;
+}
+
+.sidebar-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  margin: 0 0 4pt;
+}
+
+.sidebar p:last-child {
+  margin-bottom: 0;
+}

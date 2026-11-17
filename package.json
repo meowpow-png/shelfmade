@@ -1,7 +1,12 @@
 {
   "name": "shelfmade",
-  "version": "0.0.0",
-  "description": "Design, write and print beautifully designed books with AI.",
+  "version": "0.1.0",
+  "description": "A CLI for turning MDX content and reusable components into print-ready books.",
+  "license": "MIT",
+  "author": {
+    "name": "Marin Softić",
+    "url": "https://www.meowpow.dev"
+  },
   "keywords": [
     "book",
     "ebook",
@@ -12,9 +17,17 @@
     "pagination",
     "ai"
   ],
-  "bin": {
-    "shelfmade": "bin/shelfmade.js"
+  "homepage": "https://github.com/meowpow-png/shelfmade#readme",
+  "bugs": "https://github.com/meowpow-png/shelfmade/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meowpow-png/shelfmade.git"
   },
+  "bin": {
+    "shelfmade": "bin/shelfmade.mjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -23,7 +36,8 @@
   },
   "files": [
     "bin",
-    "dist"
+    "dist",
+    "template"
   ],
   "engines": {
     "node": ">=22.12.0"
@@ -32,7 +46,13 @@
   "scripts": {
     "prepare": "lefthook install",
     "clean": "rm -rf node_modules dist",
-    "build": "tsc && tsc-alias",
+    "build": "tsc && tsc-alias && cp -r src/runtime dist/",
+    "prepack": "rm -rf dist && npm run build",
+    "test": "playwright test",
+    "sample:install": "npm install --prefix examples/sample-book --no-audit --no-fund --ignore-scripts --silent",
+    "sample:build": "npm run build && node bin/shelfmade.mjs build --root examples/sample-book",
+    "sample": "npm run sample:install && npm run build && node bin/shelfmade.mjs dev --root examples/sample-book",
+    "sample:pdf": "npm run build && node bin/shelfmade.mjs pdf --root examples/sample-book",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:eslint": "eslint .",
@@ -47,6 +67,10 @@
   },
   "dependencies": {
     "@mdx-js/mdx": "^3.1.1",
+    "@types/mdx": "^2.0.14",
+    "esbuild": "^0.28.2",
+    "pagedjs": "0.4.3",
+    "playwright": "^1.65.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "remark-frontmatter": "^5.0.0",
@@ -55,6 +79,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@eslint/markdown": "^8.0.3",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
@@ -66,7 +91,6 @@
     "knip": "^6.31.0",
     "lefthook": "^2.1.10",
     "npm-run-all2": "^9.0.3",
-    "playwright": "^1.62.1",
     "prettier": "^3.9.6",
     "stylelint": "^17.14.1",
     "stylelint-config-standard": "^40.0.0",

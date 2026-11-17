@@ -1,5 +1,7 @@
 node_modules/
 dist/
+test-results/
+playwright-report/
 
 # IntelliJ IDEA
 .idea/*
@@ -15,3 +17,6 @@ dist/
 # AI
 .codex/
 .claude/
+
+# Obsidian
+.obsidian/

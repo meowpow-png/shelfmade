@@ -1,0 +1,33 @@
+@page {
+  /* paged.js parses this statically and can't resolve var(),
+     so it must match --page-width/--page-height in tokens.css literally;
+     the engine overrides both from the configured page format */
+  size: 148mm 210mm;
+  margin: 16mm 16mm 20mm;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  break-inside: avoid;
+}
+
+.pagedjs_pagebox {
+  background-color: var(--color-paper);
+}
+
+/* Covers headings placed directly in the book body and
+   headings wrapped in one container, like a layout's chapter <section> */
+.pagedjs_page_content > h2:first-child,
+.pagedjs_page_content > :first-child > h2:first-child,
+.pagedjs_page_content > :first-child > :first-child > h2:first-child {
+  margin-top: 0;
+}
+
+.pagination-intact-ending {
+  hyphens: none;
+  white-space: nowrap;
+}
