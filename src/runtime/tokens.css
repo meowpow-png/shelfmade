@@ -5,6 +5,11 @@
   --page-width: 148mm;
   --page-height: 210mm;
   --font-sans: 'Manrope', sans-serif;
+  --color-background: #f9fafc;
+  --color-text-primary: #25232d;
+  --color-text-secondary: #777582;
+  --color-divider: #e2e3e9;
+  --color-surface: #eaeaea;
 }
 
 html,
