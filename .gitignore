@@ -17,3 +17,6 @@ playwright-report/
 # AI
 .codex/
 .claude/
+
+# Obsidian
+.obsidian/
