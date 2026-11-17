@@ -56,4 +56,4 @@ Shelfmade isn't published on npm yet. See [docs/USAGE.md](docs/USAGE.md) for the
 
 ## Licence
 
-To be decided.
+Licensed under [MIT Licence](LICENSE).
