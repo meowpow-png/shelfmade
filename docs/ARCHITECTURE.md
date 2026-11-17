@@ -1,8 +1,8 @@
 # Architecture
 
-Shelfmade is a single npm package that a book project installs as a dev dependency. It ships a CLI, the rendering engine, the browser-side pagination runtime and the editor. A book project contains only its content, design components and configuration; it never contains pipeline code.
+Shelfmade is a single npm package that a book project installs as a dev dependency. It ships a CLI, the rendering engine and the browser-side pagination runtime. A book project contains only its content, design components and configuration; it never contains pipeline code.
 
-Books are rendered via `react-dom/server` to static HTML, paginated in the browser by paged.js, and printed to PDF by Playwright. The editor is the only part with a client runtime.
+Books are rendered via `react-dom/server` to static HTML, paginated in the browser by paged.js, and printed to PDF by Playwright.
 
 Adding a new book means adding content and configuration to a book project, not changing Shelfmade.
 
@@ -16,7 +16,6 @@ src/
     config/
     engine/
     runtime/
-    editor/
     index.ts
 template/
 ```
@@ -28,7 +27,6 @@ template/
 | `config/`   | The book-project contract: `defineConfig`, config loading and its types                 |
 | `engine/`   | Node-side rendering: book discovery, MDX reading, component injection, HTML documents   |
 | `runtime/`  | Plain CSS and JS served to the browser as-is: engine tokens, preview styles, pagination |
-| `editor/`   | The two-pane editor app: content editor, draft preview and paged preview                |
 | `index.ts`  | Public API exported to book projects                                                    |
 | `template/` | The starter book project that `init` copies into a new directory                        |
 
@@ -50,7 +48,7 @@ The engine turns a book project into one static HTML document per book, plus an 
 
 **Rules**
 
-- The engine must not depend on `cli/` or `editor/`
+- The engine must not depend on `cli/`
 - Every book-specific value (title, language, page format, stylesheets) comes from configuration
 
 ## Runtime
@@ -99,10 +97,6 @@ bin
     ↓
 cli
     ↓
-editor, engine, config
-
-editor
-    ↓
 engine, config
 
 engine
@@ -117,6 +111,5 @@ config
 **Rules**
 
 - `config/` must not depend on any other module
-- `engine/` must not depend on `editor/` or `cli/`
-- `editor/` must not depend on `cli/`
+- `engine/` must not depend on `cli/`
 - `runtime/` is loaded by rendered documents, never imported by TypeScript modules
