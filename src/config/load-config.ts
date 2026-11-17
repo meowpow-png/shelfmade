@@ -84,8 +84,8 @@ function importBundle(root: string, code: string): unknown {
 
   try {
     // Node 22.12+ loads ES modules through require(), which tsc leaves
-    // intact where it would rewrite a dynamic import() for CommonJS
-    // output eslint-disable-next-line @typescript-eslint/no-require-imports
+    // intact where it would rewrite a dynamic import() for CommonJS output
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return (require(file) as { default?: unknown }).default
   } finally {
     delete require.cache[file]
