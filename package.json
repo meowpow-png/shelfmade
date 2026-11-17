@@ -13,6 +13,12 @@
     "pagination",
     "ai"
   ],
+  "homepage": "https://github.com/meowpow-png/shelfmade#readme",
+  "bugs": "https://github.com/meowpow-png/shelfmade/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meowpow-png/shelfmade.git"
+  },
   "bin": {
     "shelfmade": "bin/shelfmade.mjs"
   },
