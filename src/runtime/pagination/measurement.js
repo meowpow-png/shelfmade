@@ -112,8 +112,8 @@
 
     // The clone can be shorter than the break offset.
     // Measuring "before" lines against it undercounts
-    // how many lines are really there, so this measures a
-    // gainst a full copy of the source paragraph instead,
+    // how many lines are really there, so this measures
+    // against a full copy of the source paragraph instead,
     // then discards it. The real clone doesn't contain the probe's
     // content, so its coordinates can't be reused to locate or trim it.
     const truncated = sourceOffset > layoutParagraph.textContent.length

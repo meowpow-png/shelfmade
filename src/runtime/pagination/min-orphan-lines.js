@@ -2,8 +2,6 @@
   const MIN_ORPHAN_LINES = 2
   const { deferToElementStart, measureBreak } = window.PaginationRules
 
-  // Pure: computes a correction without mutating anything. Returns
-  // { token, apply } (apply performs the deferred mutation) or undefined.
   function compute(breakToken, overflow, rendered) {
     const measured = measureBreak(breakToken, overflow, rendered)
     if (!measured) return

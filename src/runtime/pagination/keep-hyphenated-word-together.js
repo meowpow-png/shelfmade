@@ -35,8 +35,6 @@
     return /[\u00ad\-\u2010\u2011]/u.test(text.slice(wordStart, wordEnd))
   }
 
-  // Pure: computes a correction without mutating anything. Returns
-  // { token, apply } (apply performs the deferred mutation) or undefined.
   function compute(breakToken, _overflow, rendered) {
     if (!breakToken?.node || breakToken.node.nodeType !== Node.TEXT_NODE) return
 

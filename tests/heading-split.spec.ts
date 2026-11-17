@@ -21,7 +21,6 @@ test('break-inside: avoid defers a whole heading rather than splitting it', asyn
   const firstPageText = await pages.nth(0).innerText()
   const secondPageText = await pages.nth(1).innerText()
 
-  // The complete heading moves to the next page.
   expect(firstPageText).toContain('Filler')
   expect(firstPageText).not.toContain('Heading 1')
   expect(secondPageText).toContain('Heading 1')

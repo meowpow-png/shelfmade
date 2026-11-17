@@ -13,8 +13,8 @@ export function isBrowserMissing(error: unknown) {
   return error instanceof Error && error.message.includes("Executable doesn't exist")
 }
 
-// Downloads the headless Chromium matching the installed Playwright version
-// into Playwright's shared per-user cache
+// Downloads the headless Chromium matching the installed
+// Playwright version into Playwright's shared per-user cache
 export function installBrowser() {
   const cli = join(dirname(require.resolve('playwright/package.json')), 'cli.js')
   const { status } = spawnSync(process.execPath, [cli, ...INSTALL_ARGS], { stdio: 'inherit' })

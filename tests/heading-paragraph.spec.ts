@@ -23,7 +23,6 @@ test('KeepHeadingWithParagraph moves the heading and paragraph together when too
   const firstPageText = await pages.nth(0).innerText()
   const secondPageText = await pages.nth(1).innerText()
 
-  // The heading and paragraph move together.
   expect(firstPageText).toContain('Filler')
   expect(firstPageText).not.toContain('Heading')
   expect(firstPageText).not.toContain('Target 1')
@@ -41,7 +40,6 @@ test('KeepHeadingWithParagraph leaves a break alone when 2 lines already follow 
   const firstPageText = await pages.nth(0).innerText()
   const secondPageText = await pages.nth(1).innerText()
 
-  // The heading stays with the two lines that fit.
   expect(firstPageText).toContain('Filler')
   expect(firstPageText).toContain('Heading')
   expect(firstPageText).toContain('Target 1')

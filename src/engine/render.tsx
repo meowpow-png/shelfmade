@@ -21,8 +21,8 @@ export interface Book {
 // since the build copies the runtime next to the compiled engine.
 const RUNTIME_DIR = resolve(__dirname, '../runtime')
 
-// pagedjs exports no subpaths, so the polyfill is located relative to its
-// resolved CommonJS entry (lib/index.cjs) instead.
+// pagedjs exports no subpaths, so the polyfill is located
+// relative to its resolved CommonJS entry (lib/index.cjs) instead.
 const PAGED_POLYFILL = resolve(dirname(require.resolve('pagedjs')), '../dist/paged.polyfill.min.js')
 
 export function renderBooks(books: Book[], outDir: string) {

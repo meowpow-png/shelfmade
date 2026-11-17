@@ -3,8 +3,6 @@
   const { deferToElementStart, isHeading, measureBreak, renderedElementFor } =
     window.PaginationRules
 
-  // Pure: computes a correction without mutating anything. Returns
-  // { token, apply } (apply performs the deferred mutation) or undefined.
   function compute(breakToken, overflow, rendered) {
     // A token at offset zero on the paragraph element means paged.js has
     // already deferred the whole paragraph. Pull its heading back too.

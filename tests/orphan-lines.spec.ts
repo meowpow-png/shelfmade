@@ -23,7 +23,6 @@ test('MinOrphanLines defers an entire paragraph rather than leaving a single orp
   const firstPageText = await pages.nth(0).innerText()
   const secondPageText = await pages.nth(1).innerText()
 
-  // The target paragraph moves whole to the next page.
   expect(firstPageText).toContain('Filler')
   expect(firstPageText).not.toContain('Target 1')
   expect(secondPageText).toContain('Target 1')
@@ -39,7 +38,6 @@ test('MinOrphanLines leaves a break alone when the orphan rule is already satisf
   const firstPageText = await pages.nth(0).innerText()
   const secondPageText = await pages.nth(1).innerText()
 
-  // The two lines that fit stay on the first page.
   expect(firstPageText).toContain('Filler')
   expect(firstPageText).toContain('Target 1')
   expect(firstPageText).toContain('Target 2')

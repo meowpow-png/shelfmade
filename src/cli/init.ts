@@ -7,9 +7,8 @@ import { displayPath } from '@/cli/display-path'
 const PACKAGE_ROOT = join(__dirname, '../..')
 const TEMPLATE_DIR = join(PACKAGE_ROOT, 'template')
 
-// npm leaves .gitignore files out of published packages, so the template
-// stores it under another name. The template's books/book directory becomes
-// books/<slug>, where the config looks for the book by default.
+// npm leaves .gitignore files out of published packages,
+// so the template stores it under another name.
 const RENAMES: Record<string, string> = { gitignore: '.gitignore' }
 
 interface PackageJson {
@@ -59,6 +58,8 @@ function templateFiles() {
     .sort()
 }
 
+// The template's books/book directory becomes
+// books/<slug>, where the config looks for the book by default.
 function rename(file: string, slug: string) {
   const name = basename(file)
   const dir = dirname(file).split(sep)
@@ -72,8 +73,7 @@ function fill(text: string, values: Record<string, string>) {
   return text.replace(/\{\{(\w+)\}\}/g, (match, key: string) => values[key] ?? match)
 }
 
-// Relative, so the link survives moving both folders, unless the absolute
-// path is shorter
+// Relative, so the link survives moving both folders, unless the absolute path is shorter
 function linkPath(root: string) {
   const path = relative(root, PACKAGE_ROOT).split(sep).join('/')
   return path.length < PACKAGE_ROOT.length ? path : PACKAGE_ROOT

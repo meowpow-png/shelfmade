@@ -65,7 +65,6 @@ test('KeepHeadingWithParagraph leaves the break alone when enough lines already 
     return { computed: !!candidate }
   })
 
-  // 3 real lines already stay with the heading, so the break stays put.
   expect(result.computed).toBe(false)
 })
 
@@ -126,7 +125,6 @@ test('KeepHeadingWithParagraph still moves the heading and paragraph together wh
 
   expect(result.computed).toBe(true)
   expect(result.correctedIsHeadingStart).toBe(true)
-  // compute() must be pure; the mutation only happens once apply() runs.
   expect(result.cloneRemovedBeforeApply).toBe(false)
   expect(result.cloneRemovedAfterApply).toBe(true)
 })

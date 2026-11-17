@@ -67,7 +67,6 @@ test('MinWidowLines still defers a genuine widow when handed a render clone with
 
   expect(result.computed).toBe(true)
   expect(result.correctedIsParagraphStart).toBe(true)
-  // compute() must be pure; the mutation only happens once apply() runs.
   expect(result.cloneRemovedBeforeApply).toBe(false)
   expect(result.cloneRemovedAfterApply).toBe(true)
 })
