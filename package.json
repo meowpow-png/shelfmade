@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "A CLI for turning MDX content and reusable components into print-ready books.",
   "license": "MIT",
+  "author": {
+    "name": "Marin Softić",
+    "url": "https://www.meowpow.dev"
+  },
   "keywords": [
     "book",
     "ebook",
