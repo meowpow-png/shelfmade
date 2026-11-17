@@ -1,7 +1,7 @@
 {
   "name": "shelfmade",
   "version": "0.1.0",
-  "description": "Design, write and print beautifully designed books with AI.",
+  "description": "A CLI for turning MDX content and reusable components into print-ready books.",
   "license": "MIT",
   "keywords": [
     "book",
