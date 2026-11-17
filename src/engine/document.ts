@@ -63,9 +63,8 @@ export function renderIndex(body: string) {
 `
 }
 
-// The page size sits between the runtime and book stylesheets,
-// so it overrides the runtime's A5 default while the
-// book's stylesheets can still override it
-function renderPageSize({ width, height }: PageSize) {
+// Sits between runtime and book stylesheets: overrides the runtime default,
+// but book styles can still override this
+export function renderPageSize({ width, height }: PageSize) {
   return `:root { --page-width: ${width}; --page-height: ${height}; } @page { size: ${width} ${height}; }`
 }

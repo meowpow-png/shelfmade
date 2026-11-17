@@ -19,5 +19,8 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  // client/ is Vite-transformed browser source with its own module settings;
+  // type-checked separately via src/client/tsconfig.json
+  "exclude": ["src/client"]
 }

@@ -18,13 +18,15 @@ export interface Book {
   App: ComponentType
 }
 
-// Resolves to src/runtime when run from source and dist/runtime when built,
-// since the build copies the runtime next to the compiled engine.
-const RUNTIME_DIR = resolve(__dirname, '../runtime')
+// src/runtime in dev, dist/runtime when built (copied next to the compiled engine)
+export const RUNTIME_DIR = resolve(__dirname, '../runtime')
 
 // pagedjs exports no subpaths, so the polyfill is located
 // relative to its resolved CommonJS entry (lib/index.cjs) instead.
-const PAGED_POLYFILL = resolve(dirname(require.resolve('pagedjs')), '../dist/paged.polyfill.min.js')
+export const PAGED_POLYFILL = resolve(
+  dirname(require.resolve('pagedjs')),
+  '../dist/paged.polyfill.min.js',
+)
 
 export function renderBooks(books: Book[], outDir: string) {
   mkdirSync(join(outDir, 'shelfmade/vendor'), { recursive: true })

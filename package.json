@@ -64,7 +64,7 @@
     "lint:fix:eslint": "eslint . --fix",
     "lint:fix:stylelint": "stylelint \"**/*.css\" --allow-empty-input --fix",
     "lint:fix": "run-s --continue-on-error lint:fix:eslint lint:fix:stylelint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/client",
     "knip": "knip",
     "qualitycheck": "run-s --continue-on-error format:check lint typecheck build knip"
   },

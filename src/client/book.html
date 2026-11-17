@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="__SHELFMADE_LANG__">
+  <head>
+    <meta charset="UTF-8" />
+    <title>__SHELFMADE_TITLE__</title>
+    <link rel="stylesheet" href="shelfmade/tokens.css" />
+    <link rel="stylesheet" href="shelfmade/pagination/pagination.css" />
+    <style>
+      __SHELFMADE_PAGE_SIZE__
+    </style>
+    __SHELFMADE_STYLESHEETS__
+    <link rel="stylesheet" href="shelfmade/preview.css" media="screen" />
+    <script>
+      // auto: false; the client entry triggers pagination manually after mounting real content
+      window.PagedConfig = {
+        auto: false,
+        after: () => {
+          window.PAGED_READY = true
+        },
+      }
+    </script>
+    <script src="shelfmade/vendor/paged.polyfill.min.js"></script>
+    <script src="shelfmade/pagination/break-token.js"></script>
+    <script src="shelfmade/pagination/measurement.js"></script>
+    <script src="shelfmade/pagination/rendered-elements.js"></script>
+    <script src="shelfmade/pagination/protect-paragraph-ending.js"></script>
+    <script src="shelfmade/pagination/keep-heading-with-paragraph.js"></script>
+    <script src="shelfmade/pagination/keep-hyphenated-word-together.js"></script>
+    <script src="shelfmade/pagination/min-widow-lines.js"></script>
+    <script src="shelfmade/pagination/min-orphan-lines.js"></script>
+    <script src="shelfmade/pagination/break-token-dispatch.js"></script>
+    <script src="shelfmade/pagination/pagination-rules.js"></script>
+  </head>
+  <body>
+    <div id="book-root">__SHELFMADE_BOOK_ROOT__</div>
+    <script>
+      window.__SHELFMADE_BOOK_SLUG__ = __SHELFMADE_SLUG_JSON__
+    </script>
+    <script type="module" src="__SHELFMADE_ENTRY_URL__"></script>
+  </body>
+</html>
