@@ -5,6 +5,7 @@ import { type ComponentType } from 'react'
 
 import { copyAssets } from '@/engine/assets'
 import { renderDocument, renderIndex } from '@/engine/document'
+import { BookOpenIcon } from '@/engine/icons/BookOpenIcon'
 import { type PageSize } from '@/engine/page-format'
 
 export interface Book {
@@ -46,13 +47,35 @@ export function renderBooks(books: Book[], outDir: string) {
   }
 
   const index = renderToStaticMarkup(
-    <ul>
-      {books.map(({ slug, title }) => (
-        <li key={slug}>
-          <a href={`${slug}.html`}>{title}</a>
-        </li>
-      ))}
-    </ul>,
+    <div className="books-page">
+      <div className="books-header">
+        <h1 className="books-header-title">Your books</h1>
+        <button type="button" className="new-book-button">
+          + New book
+        </button>
+      </div>
+      {books.length === 0 ? (
+        <div className="empty-state">
+          <p className="empty-state-title">No books yet</p>
+          <p className="empty-state-description">Create your first book to see it listed here.</p>
+        </div>
+      ) : (
+        <ul className="book-list">
+          {books.map(({ slug, title }) => (
+            <li key={slug} className="book-row">
+              <BookOpenIcon className="book-row-icon" />
+              <div className="book-row-info">
+                <p className="book-row-title">{title}</p>
+                <p className="book-row-path">/books/{slug}</p>
+              </div>
+              <a className="book-row-open" href={`${slug}.html`}>
+                Open
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>,
   )
 
   writeFileSync(join(outDir, 'index.html'), renderIndex(index))

@@ -47,10 +47,16 @@ export function renderIndex(body: string) {
   <head>
     <meta charset="UTF-8" />
     <title>Books</title>
+    <link rel="stylesheet" href="shelfmade/tokens.css" />
     <link rel="stylesheet" href="shelfmade/fonts.css" />
+    <link rel="stylesheet" href="shelfmade/index.css" />
   </head>
   <body>
-    <h1>Books</h1>
+    <div class="topbar">
+      <p class="topbar-wordmark">Shelfmade</p>
+      <div class="topbar-divider"></div>
+      <span class="topbar-label">Books</span>
+    </div>
     ${body}
   </body>
 </html>
