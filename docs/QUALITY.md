@@ -58,6 +58,15 @@ Knip is used for flagging unused files, exports, and dependencies. No auto-fix h
 npm run knip
 ```
 
+## Tests
+
+Tests use Playwright, checking the pagination rules against the fixtures in `tests/fixtures/` in both Chromium and Firefox. They aren't part of `qualitycheck`, so run them separately, on your machine or in the Playwright container, which has both browsers installed:
+
+```sh
+npm test
+just test
+```
+
 ## Sample book
 
 `examples/sample-book/` is a book project structured like a real one, linked to this repository with a `file:` dependency. Preview it at `http://localhost:8080` with live reload:
@@ -91,3 +100,14 @@ node bin/shelfmade.mjs init ../my-book --link
 Lefthook runs quality checks before every `git push`, so a broken build or failing check never leaves your machine.
 
 Hooks are installed automatically by the `prepare` script, which runs on `npm install` and `npm ci`, so there's nothing to set up by hand.
+
+## CI
+
+GitHub Actions runs CI on pushes and pull requests targeting `main` and `dev` when relevant files change, and it can also be started manually. There are two jobs:
+
+- **Quality Checks** runs the same checks as `npm run qualitycheck`
+- **Test** runs the Playwright tests in both browsers, then builds the sample book
+
+Docs-only changes skip the **Test** job. Each job runs all of its checks even if one fails, then reports the results in the job summary.
+
+In CI, a failing test is retried up to two times and `test.only` fails the run. When tests fail, the report and traces are uploaded as the `playwright-results` artifact.
