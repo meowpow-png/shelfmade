@@ -1,10 +1,25 @@
 import { readdirSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 
+import { type ViteDevServer } from 'vite'
+
 import { readMdx } from '@/engine/mdx'
 import { resolvePageSize } from '@/engine/page-format'
 import { type Book } from '@/engine/render'
-import { type Chapter, type Components, type LayoutProps, type ShelfmadeConfig } from '@/config'
+import {
+  loadConfigViaVite,
+  type Chapter,
+  type Components,
+  type LayoutProps,
+  type ShelfmadeConfig,
+} from '@/config'
+
+// Mirrors resolveBooks, but loads the config through Vite's SSR module graph
+// so component imports participate in Vite's live resolution and invalidation.
+export async function resolveBooksViaVite(server: ViteDevServer, root: string): Promise<Book[]> {
+  const config = await loadConfigViaVite(server, root)
+  return resolveBooks(config, root)
+}
 
 export function resolveBooks(config: ShelfmadeConfig, root: string): Book[] {
   return Object.entries(config.books).map(([slug, book]) => {
