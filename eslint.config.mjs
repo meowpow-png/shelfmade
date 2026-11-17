@@ -16,6 +16,7 @@ export default defineConfig([
       '**/dist/**',
       '**/node_modules/**',
       '**/test-results/**',
+      '**/playwright-report/**',
     ],
   },
   {

@@ -1,6 +1,6 @@
 {
   "extends": "stylelint-config-standard",
-  "ignoreFiles": ["dist/**", "node_modules/**"],
+  "ignoreFiles": ["dist/**", "node_modules/**", "playwright-report/**"],
   "rules": {
     "selector-class-pattern": "^([a-z][a-z0-9]*)(-[a-z0-9]+)*$|^pagedjs_[a-zA-Z0-9_-]+$",
     "declaration-property-value-no-unknown": [

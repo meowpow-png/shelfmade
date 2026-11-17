@@ -3,7 +3,14 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
-  reporter: 'list',
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  reporter: process.env.CI
+    ? [['list'], ['json', { outputFile: 'playwright-report/results.json' }]]
+    : 'list',
+  use: {
+    trace: 'on-first-retry',
+  },
   // Match the Chromium-based PDF rendering environment.
   projects: [
     {
