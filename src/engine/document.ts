@@ -47,6 +47,7 @@ export function renderIndex(body: string) {
   <head>
     <meta charset="UTF-8" />
     <title>Books</title>
+    <link rel="stylesheet" href="shelfmade/fonts.css" />
   </head>
   <body>
     <h1>Books</h1>
