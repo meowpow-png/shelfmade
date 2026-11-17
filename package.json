@@ -37,6 +37,9 @@
   "files": [
     "bin",
     "dist",
+    "src/assets",
+    "src/client",
+    "src/runtime",
     "template"
   ],
   "engines": {
@@ -46,7 +49,7 @@
   "scripts": {
     "prepare": "lefthook install",
     "clean": "rm -rf node_modules dist",
-    "build": "tsc && tsc-alias && cp -r src/runtime dist/ && cp src/engine/icons/*.svg dist/engine/icons/",
+    "build": "tsc && tsc-alias && cp -r src/runtime dist/ && cp -r src/assets dist/",
     "prepack": "rm -rf dist && npm run build",
     "test": "playwright test",
     "sample:install": "npm install --prefix examples/sample-book --no-audit --no-fund --ignore-scripts --silent",
