@@ -52,7 +52,7 @@ npx shelfmade build   # render all books
 npx shelfmade pdf     # export print-ready PDFs
 ```
 
-Shelfmade isn't published on npm yet. See [docs/USAGE.md](docs/USAGE.md) for the full guide.
+See [docs/USAGE.md](docs/USAGE.md) for the full guide.
 
 ## Licence
 
