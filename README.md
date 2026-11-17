@@ -1,44 +1,38 @@
 # Shelfmade
 
-Describe how your book should look, write it yourself or draft it with AI, and get beautifully designed, print-ready books — one title or a whole series.
-
-> **Status:** early development. The command line works: it creates book projects, previews them with live reload and prints them to PDF. The editor and the AI workflow described below are not built yet.
+Shelfmade is a command-line tool for building print-ready books. You write content in MDX and design in reusable components, preview the result with live reload, and export a paginated, print-accurate PDF.
 
 ## What is Shelfmade?
 
-Shelfmade is a book studio for people who want to publish designed books without being designers or experienced developers. You work alongside an AI assistant: it turns your ideas into a book's visual design, helps you draft and refine the text, and Shelfmade turns the result into a paginated, print-accurate book you can export.
+Shelfmade takes book content written in MDX and design elements built as reusable components, then turns them into a paginated, print-accurate book. A chapter opener, a pull quote, a sidebar, a cover layout: each is a component you can reuse within a book or across a whole series, so every title shares the same look.
 
-Every design element you create — a chapter opener, a pull quote, a sidebar, a cover layout — becomes a reusable building block. Use it in one book, or across a whole catalogue so every title in a series shares the same look.
+Everything currently runs through the command line: scaffold a project, preview it while you write, and export to PDF.
 
-## How it works
+## Pages done right
 
-1. **Describe the design.** Explain to the AI what your book should look like, or hand it a mockup you already have.
-2. **Get building blocks.** The AI creates the design as reusable components that any of your books can use.
-3. **Refine it.** Adjust colours, typography and layout until it looks right, with the AI making the changes for you.
-4. **Add the words.** Write the content yourself, or have the AI draft it following voice and style instructions you keep alongside your books.
-5. **Preview and export.** See every page exactly as it will print, then export print-ready files.
+Print has a lot of small rules that are easy to get wrong by hand. Shelfmade takes care of them for you:
 
-## The editor
-
-Shelfmade runs on your own computer as a two-pane editor:
-
-- **Left:** your content and design.
-- **Right:** a live preview of the book.
-
-The preview has two modes: a fast, continuous view that keeps up while you type, and an exact page-by-page view that shows precisely where every page breaks.
-
-## Typography that cares about pages
-
-Good-looking books depend on details most tools ignore. Shelfmade's pagination engine handles them for you:
-
-- No widows or orphans — single lines stranded at the top or bottom of a page
+- No widows or orphans (single lines stranded at the top or bottom of a page)
 - Headings stay with the paragraph that follows them
 - Paragraphs don't end with a lonely fragment on a new page
 - Hyphenated words are never split across pages
 
+## What you see is what prints
+
+`shelfmade dev` doesn't show you an approximation. It builds and serves the same paginated output that `pdf` prints, and rebuilds it every time you save. If a change breaks the build, the error is printed and the preview keeps showing the last good version until the next save fixes it.
+
 ## Your books are yours
 
-Books live in an ordinary folder on your machine — plain text content, design components and a small configuration file. Nothing is locked into a proprietary format or a hosted service: you can open, back up, move or version your books like any other files.
+Books live in an ordinary folder on your machine: plain text content, design components and a small configuration file. There's no proprietary format and no hosted service involved. You can open, back up, move or version your books like any other files.
+
+## Not built yet
+
+Two pieces described in the project's longer-term plans don't exist yet:
+
+- **A visual editor.** A two-pane app with your content and design on one side and a live preview on the other, instead of working from the terminal.
+- **AI-assisted design and drafting.** Describing a design or handing over a mockup and getting matching components, plus AI help drafting and refining content.
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for where things stand.
 
 ## Usage
 
@@ -53,14 +47,12 @@ npm install
 Then, inside the project:
 
 ```sh
-npx shelfmade dev     # preview with live reload (the editor later)
+npx shelfmade dev     # preview with live reload
 npx shelfmade build   # render all books
 npx shelfmade pdf     # export print-ready PDFs
 ```
 
 Shelfmade isn't published on npm yet. See [docs/USAGE.md](docs/USAGE.md) for the full guide.
-
-A guided, no-setup version that doesn't require working with folders or commands is a longer-term goal.
 
 ## Licence
 
