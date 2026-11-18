@@ -1,5 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/runtime/pagination/*.js"],
+  "entry": [
+    "src/runtime/pagination/*.js",
+    "src/client/book-page.tsx",
+    "src/client/index-page.tsx",
+    "src/client/render-index.tsx"
+  ],
   "ignore": ["examples/**", "template/**"]
 }
