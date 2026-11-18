@@ -16,7 +16,7 @@ Checking the static build directly (loaded headless, waiting on its own ready si
 
 Root cause: the dev-mode mount code passed its own hidden staging container, itself styled off-screen and invisible, as the content root into the pagination engine:
 
-```
+```js
 // before
 previewer.preview(scratch, ...)   // scratch: position: fixed; visibility: hidden
 ```
@@ -27,7 +27,7 @@ The engine's ancestor-rebuilding step walks every real DOM ancestor of a node wh
 
 **Fix:** build a plain document fragment from deep clones of the staging container's children and hand that fragment to the pagination engine instead of the container itself, mirroring the static build's own pattern:
 
-```
+```js
 // after
 const fragment = document.createDocumentFragment()
 fragment.append(...[...scratch.children].map((el) => el.cloneNode(true)))

@@ -4,7 +4,7 @@
 
 Reported as duplicated or garbled text at a page boundary in the live preview. The real symptom was narrower: the client-side pagination engine silently dropped a paragraph's final word plus trailing punctuation at one specific page break. Reproduced with a stress-test fixture, a run-on sentence engineered to force a page break near the paragraph's end:
 
-```
+```text
 examples/sample-book/books/field-notes/content/chapter-1.mdx:29
 ```
 
@@ -20,7 +20,7 @@ Toggling each pagination rule handler off one at a time isolated the cause to th
 
 To catch the actual drop, the DOM mutation primitives were monkey-patched for the duration of one pagination pass, logging a stack trace on any mutation touching the affected text:
 
-```
+```text
 Node.prototype.removeChild
 Element.prototype.remove
 CharacterData.prototype.remove
@@ -34,7 +34,7 @@ Follow-up experiments confirmed this is a precise fit-or-no-fit threshold rather
 
 Two CSS-only fixes had no effect, since the pagination engine makes break decisions for inline content at the line level and never consults block fragmentation properties on an inline element:
 
-```
+```css
 break-before: avoid
 display: inline-block
 ```

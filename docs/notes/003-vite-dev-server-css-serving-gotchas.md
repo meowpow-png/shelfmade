@@ -16,7 +16,7 @@ The cascade bug was a straightforward import-order fix: the static build already
 
 The content-type bug needed a dev-server plugin that intercepts requests before Vite's own static and transform middleware runs, rather than one registered after server startup. The first attempt scoped the plugin to every asset under a book's path, which broke loading the book's own component files, since those share the same URL-collision problem but actually need Vite's transform, unlike CSS. Narrowing the plugin to CSS requests only fixed the regression:
 
-```
+```js
 configureServer(server) {
   server.middlewares.use((req, res, next) => {
     if (req.url?.endsWith('.css')) {

@@ -10,7 +10,7 @@ Reload-spamming the page, even right after restarting the dev server fresh, stop
 
 Editing the sample book's first chapter repeatedly did reproduce it, reliably. Each save logged the exact Fast Refresh incompatibility warning I'd suspected, for the module that resolves a book in the browser:
 
-```
+```text
 [vite] invalidate .../resolve-book.tsx: Could not Fast Refresh ("resolveBookInBrowser" export is incompatible)
 ```
 

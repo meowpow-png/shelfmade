@@ -10,7 +10,7 @@ Following the house convention for isolating causes, I set up a synchronous trap
 
 I patched the DOM methods responsible for inserting a node into the document head, filtered down to catches where the inserted node was a style tag. That isolated the moment precisely.
 
-```
+```text
 Node.prototype.appendChild
 Node.prototype.insertBefore
 target === document.head
@@ -27,7 +27,7 @@ Three things about prior mitigation attempts fell into place once I saw the trap
 
 The trap showed that pagedjs's preview method inserts its own generated style tag straight into the live document head as a side effect of pagination, and it does this mid-pass, before the old page's styles are cleaned up or the DOM swap happens. I confirmed the timing by checking pagedjs's own ready flag and the book root's child count at the moment of insertion:
 
-```
+```text
 window.PAGED_READY === false
 bookRoot.children.length === 1   // still just the old page
 ```
@@ -40,13 +40,13 @@ Root cause confirmed: pagedjs writes its pagination styles into the live documen
 
 Fix shipped, in the client's book page component:
 
-```
+```text
 src/client/book-page.tsx
 ```
 
 The entire pagedjs preview pass now runs inside a hidden, isolated iframe, built once and cached across remounts in the dev-server hot module state rather than rebuilt per edit:
 
-```
+```text
 hot.data.previewFramePromise
 ```
 
@@ -54,9 +54,9 @@ The iframe's head mirrors the main document's book stylesheets, the pagedjs poly
 
 Three pitfalls surfaced while building the iframe isolation, worth remembering for similar work:
 
-1. Cloning a script element carries over the spec's "already started" flag if the original already ran once, which was the case here since the main document had already executed each script on page load. The clone then silently never executes and never fires a load or error event, which hangs any code waiting on that event, including a `Promise.all` across all the scripts, forever. The fix is to build a fresh script element and copy its attributes and text by hand instead of cloning:
+1. Cloning a script element carries over the spec's "already started" flag if the original already ran once, which was the case here since the main document had already executed each script on page load. The clone then silently never executes and never fires a load or error event, which hangs any code waiting on that event, including a combined wait across all the scripts, forever. The fix is to build a fresh script element and copy its attributes and text by hand instead of cloning:
 
-```
+```text
 importNode / cloneNode        // carries over "already started", breaks silently
 document.createElement("script")   // fresh element, the fix
 ```
@@ -64,7 +64,7 @@ document.createElement("script")   // fresh element, the fix
 2. An inline script with no source attribute never fires load or error at all, only external scripts do. A naive loop that waits for every script's load event will hang on these.
 3. Browsers throttle requestAnimationFrame in iframes they judge not visible. Both hiding a frame with visibility and positioning it off-screen can each independently trigger this throttling:
 
-```
+```css
 visibility: hidden
 left: -10000px
 ```
