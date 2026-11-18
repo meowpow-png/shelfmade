@@ -5,7 +5,6 @@ import mdx from '@mdx-js/rollup'
 import react from '@vitejs/plugin-react'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
-import { renderToStaticMarkup } from 'react-dom/server'
 import { createServer, type Plugin, type ViteDevServer } from 'vite'
 
 import { resolveBooksViaVite } from '@/engine/books'
@@ -200,7 +199,8 @@ async function serveBookPage(server: ViteDevServer, root: string, slug: string, 
   if (!book) return null
 
   const { App } = book
-  const body = renderToStaticMarkup(<App />)
+  const { renderBookBody } = await server.ssrLoadModule(resolve(SRC_DIR, 'client/render-book.tsx'))
+  const body = renderBookBody(App)
   const stylesheets = readdirSync(book.dir)
     .filter((file) => file.endsWith('.css'))
     .sort()
