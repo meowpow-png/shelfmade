@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 
 import { resolveBookInBrowser } from '@/client/resolve-book'
@@ -64,8 +65,9 @@ async function mount(container: HTMLElement) {
   // Off-screen so the old pages stay visible until the swap
   const scratch = offscreenContainer()
   const root = createRoot(scratch)
-  root.render(<App />)
-  await nextFrame()
+  // flushSync guarantees the commit lands before we clone scratch below -
+  // a single requestAnimationFrame wasn't a reliable enough signal
+  flushSync(() => root.render(<App />))
   await waitForImages(scratch)
 
   const previewer = new window.Paged.Previewer()
@@ -107,10 +109,6 @@ function offscreenContainer() {
   element.style.cssText = 'position: fixed; top: 0; left: 0; visibility: hidden;'
   document.body.appendChild(element)
   return element
-}
-
-function nextFrame() {
-  return new Promise((resolve) => requestAnimationFrame(resolve))
 }
 
 // Avoids pagedjs measuring page height before images load and reflowing later
