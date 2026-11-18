@@ -28,7 +28,9 @@
     <script src="shelfmade/pagination/pagination-rules.js"></script>
   </head>
   <body>
-    <div id="book-root">__SHELFMADE_BOOK_ROOT__</div>
+    <!-- Hidden until mount() reveals it - this is unpaginated SSR markup,
+    with no page shell and no page-box to constrain images, not the final look -->
+    <div id="book-root" style="visibility: hidden">__SHELFMADE_BOOK_ROOT__</div>
     <script>
       window.__SHELFMADE_BOOK_SLUG__ = __SHELFMADE_SLUG_JSON__
       window.__SHELFMADE_REMOUNT_DEBOUNCE_MS__ = __SHELFMADE_DEBOUNCE_MS__

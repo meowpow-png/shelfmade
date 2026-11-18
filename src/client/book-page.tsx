@@ -5,8 +5,11 @@ import { resolveBookInBrowser } from '@/client/resolve-book'
 
 interface Previewer {
   preview(content: Node, stylesheets: unknown[], renderTo: HTMLElement): Promise<unknown>
-  removeStyles(): unknown[]
+  removeStyles(doc?: Document): unknown[]
   chunker: { removePages(): void }
+  // Each preview() call inserts its converted CSS as new <style> tags
+  // appended straight to the live document.head
+  polisher: { inserted: HTMLStyleElement[] }
 }
 
 declare global {
@@ -73,10 +76,13 @@ async function mount(container: HTMLElement) {
   const previewer = new window.Paged.Previewer()
   // hot.data, not module scope - HMR resets module scope on every accepted update
   const hot = import.meta.hot
+  // A clone, not the live document - removeStyles() rips the matched
+  // stylesheets out of whatever doc it's given, which would strip the
+  // still-visible page's own styling until the swap below
   if (hot) {
-    hot.data.stylesheets ??= previewer.removeStyles()
+    hot.data.stylesheets ??= previewer.removeStyles(document.cloneNode(true) as Document)
   } else {
-    stylesheets ??= previewer.removeStyles()
+    stylesheets ??= previewer.removeStyles(document.cloneNode(true) as Document)
   }
   const activeStylesheets: unknown[] = hot ? hot.data.stylesheets : stylesheets
 
@@ -91,11 +97,17 @@ async function mount(container: HTMLElement) {
 
   const pages = renderTarget.firstElementChild
   if (pages) container.replaceChildren(pages)
+  // Reveals book-root - hidden since the initial HTML so the unpaginated
+  // SSR markup (no page shell, images unconstrained by a page box) is
+  // never shown; a no-op once already revealed by an earlier mount
+  container.style.visibility = ''
   window.PAGED_READY = true
 
-  // Disconnects the old pages' ResizeObservers - they'd otherwise leak one per remount
+  // Disconnects the old pages' ResizeObservers and removes its injected
+  // <style> tags - both would otherwise leak one set per remount
   if (hot) {
     hot.data.previewer?.chunker.removePages()
+    hot.data.previewer?.polisher.inserted.forEach((style: HTMLStyleElement) => style.remove())
     hot.data.previewer = previewer
   }
 
