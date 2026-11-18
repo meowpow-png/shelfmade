@@ -19,7 +19,7 @@ Print has a lot of small rules that are easy to get wrong by hand. Shelfmade tak
 
 ## What you see is what prints
 
-`shelfmade dev` doesn't show you an approximation. It builds and serves the same paginated output that `pdf` prints, and rebuilds it every time you save. If a change breaks the build, the error is printed and the preview keeps showing the last good version until the next save fixes it.
+`shelfmade dev` doesn't show you an approximation. It builds and serves the same paginated output that `pdf` prints, and rebuilds it every time you save.
 
 ## Your books are yours
 

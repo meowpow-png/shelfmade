@@ -31,8 +31,8 @@ A real book has shipped through Shelfmade, with the same page count and breaks a
 
 **Steps:**
 
-- [ ] Choose a licence
-- [ ] Publish the package on npm
+- [x] Choose a licence
+- [x] Publish the package on npm
 
 **Done when:**
 
