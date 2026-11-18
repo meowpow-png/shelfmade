@@ -1,11 +1,11 @@
-import { type ComponentType, type FunctionComponent } from 'react'
+import { createElement, type ComponentType, type FunctionComponent } from 'react'
 
+import { DefaultLayout } from '@/client/default-layout'
 import { resolvePageSize, type PageSize } from '@/engine/page-format'
 import {
   type Chapter,
   type Components,
   type Frontmatter,
-  type LayoutProps,
   type ShelfmadeConfig,
 } from '@/config'
 
@@ -23,14 +23,11 @@ interface MdxModule {
   frontmatter?: Frontmatter
 }
 
-// Tracks every chapter in Vite's module graph, so edits invalidate this
-// entry (the Node engine just re-reads via fs instead)
+// Puts every chapter in Vite's module graph so edits invalidate it (the Node engine reads via fs instead)
 const CHAPTER_MODULES = import.meta.glob<MdxModule>('/**/*.mdx')
 
 export async function resolveBookInBrowser(slug: string): Promise<ClientBook | null> {
-  // Literal specifier so Vite can track the config in its HMR graph. Path
-  // only exists in the served book project, not this package's TS program,
-  // so the type is asserted instead.
+  // Literal specifier for Vite's HMR graph; path only exists in the served project, hence the assertion
   // @ts-expect-error -- see above
   const { default: config } = (await import('/shelfmade.config.ts')) as {
     default: ShelfmadeConfig
@@ -51,7 +48,7 @@ export async function resolveBookInBrowser(slug: string): Promise<ClientBook | n
     documentTitle: config.titlePrefix ? `${config.titlePrefix} — ${book.title}` : book.title,
     lang: book.lang ?? config.lang ?? 'en',
     pageSize: resolvePageSize(book.pageFormat ?? config.pageFormat ?? 'A5'),
-    App: () => <Layout title={book.title} chapters={chapters} />,
+    App: () => createElement(Layout, { title: book.title, chapters }),
   }
 }
 
@@ -77,12 +74,4 @@ async function resolveChapters(contentDir: string, components: Components): Prom
   }
 
   return chapters
-}
-
-function DefaultLayout({ chapters }: LayoutProps) {
-  return chapters.map(({ slug, Body }) => (
-    <section key={slug} className="chapter">
-      <Body />
-    </section>
-  ))
 }
