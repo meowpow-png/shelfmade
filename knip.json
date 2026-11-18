@@ -6,5 +6,6 @@
     "src/client/index-page.tsx",
     "src/client/render-index.tsx"
   ],
-  "ignore": ["examples/**", "template/**"]
+  "ignore": ["examples/**", "template/**"],
+  "ignoreUnresolved": ["^/shelfmade\\.config\\.ts$"]
 }
