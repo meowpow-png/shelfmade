@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <title>__SHELFMADE_TITLE__</title>
     <link rel="stylesheet" href="shelfmade/tokens.css" />
+    <link rel="stylesheet" href="shelfmade/fonts.css" />
+    <link rel="stylesheet" href="shelfmade/topbar.css" />
     <link rel="stylesheet" href="shelfmade/pagination/pagination.css" />
     <style>
       __SHELFMADE_PAGE_SIZE__
@@ -28,6 +30,7 @@
     <script src="shelfmade/pagination/pagination-rules.js"></script>
   </head>
   <body>
+    __SHELFMADE_TOPBAR__
     <!-- Hidden until mount() reveals it - this is unpaginated SSR markup,
     with no page shell and no page-box to constrain images, not the final look -->
     <div id="book-root" style="visibility: hidden">__SHELFMADE_BOOK_ROOT__</div>

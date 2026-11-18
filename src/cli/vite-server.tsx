@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { createServer, type Plugin, type ViteDevServer } from 'vite'
 
 import { resolveBooksViaVite } from '@/engine/books'
-import { renderPageSize } from '@/engine/document'
+import { renderPageSize, renderTopbar } from '@/engine/document'
 import { PAGED_POLYFILL, RUNTIME_DIR } from '@/engine/render'
 
 // src/ next to dist/ when built, or this package's own src/ in dev
@@ -214,6 +214,7 @@ async function serveBookPage(server: ViteDevServer, root: string, slug: string, 
     __SHELFMADE_PAGE_SIZE__: renderPageSize(book.pageSize),
     __SHELFMADE_STYLESHEETS__: stylesheets,
     __SHELFMADE_BOOK_ROOT__: body,
+    __SHELFMADE_TOPBAR__: renderTopbar('Visual Editor'),
     __SHELFMADE_SLUG_JSON__: JSON.stringify(slug),
     __SHELFMADE_DEBOUNCE_MS__: String(PREVIEW_REMOUNT_DEBOUNCE_MS),
     __SHELFMADE_ENTRY_URL__: `/@fs${resolve(SRC_DIR, 'client/book-page.tsx')}`,
@@ -234,6 +235,7 @@ async function serveIndexPage(server: ViteDevServer, root: string, url: string) 
   const template = readFileSync(resolve(SRC_DIR, 'client/index.html'), 'utf-8')
 
   const html = fillTemplate(template, {
+    __SHELFMADE_TOPBAR__: renderTopbar('Books'),
     __SHELFMADE_BOOKS_ROOT__: renderIndexBody(books),
     __SHELFMADE_BOOKS_JSON__: JSON.stringify(books),
     __SHELFMADE_ENTRY_URL__: `/@fs${resolve(SRC_DIR, 'client/index-page.tsx')}`,
