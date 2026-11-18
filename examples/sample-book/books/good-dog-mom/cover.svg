@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 210">
+  <rect width="148" height="210" fill="#f6e9dd" />
+  <path d="M0 148 Q37 133 74 148 T148 148 V210 H0 Z" fill="#c2653f" />
+  <path d="M0 163 Q37 150 74 163 T148 163 V210 H0 Z" fill="#9c4c30" />
+  <g fill="#8a5a3b">
+    <ellipse cx="58" cy="54" rx="9" ry="14" transform="rotate(-25 58 54)" />
+    <ellipse cx="90" cy="54" rx="9" ry="14" transform="rotate(25 90 54)" />
+    <circle cx="74" cy="72" r="22" />
+  </g>
+  <circle cx="66" cy="68" r="2.4" fill="#2a1d14" />
+  <circle cx="82" cy="68" r="2.4" fill="#2a1d14" />
+  <ellipse cx="74" cy="78" rx="4" ry="3" fill="#2a1d14" />
+  <path
+    d="M74 101 c-3-5-11-3-11 2 c0 6 11 12 11 12 c0 0 11-6 11-12 c0-5-8-7-11-2 Z"
+    fill="#e2694b"
+  />
+  <text x="16" y="178" fill="#fff" font-family="'Trebuchet MS', Verdana, sans-serif" font-size="13" font-weight="700">How to Be a</text>
+  <text x="16" y="195" fill="#fff" font-family="'Trebuchet MS', Verdana, sans-serif" font-size="13" font-weight="700">Good Dog Mom</text>
+</svg>
