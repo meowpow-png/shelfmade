@@ -11,13 +11,9 @@
     __SHELFMADE_STYLESHEETS__
     <link rel="stylesheet" href="shelfmade/preview.css" media="screen" />
     <script>
-      // auto: false; the client entry triggers pagination manually after mounting real content
-      window.PagedConfig = {
-        auto: false,
-        after: () => {
-          window.PAGED_READY = true
-        },
-      }
+      // auto: false; client entry drives pagination and sets PAGED_READY itself -
+      // config.after fires on document-interactive regardless of auto, so it's unusable here
+      window.PagedConfig = { auto: false }
     </script>
     <script src="shelfmade/vendor/paged.polyfill.min.js"></script>
     <script src="shelfmade/pagination/break-token.js"></script>
@@ -35,6 +31,7 @@
     <div id="book-root">__SHELFMADE_BOOK_ROOT__</div>
     <script>
       window.__SHELFMADE_BOOK_SLUG__ = __SHELFMADE_SLUG_JSON__
+      window.__SHELFMADE_REMOUNT_DEBOUNCE_MS__ = __SHELFMADE_DEBOUNCE_MS__
     </script>
     <script type="module" src="__SHELFMADE_ENTRY_URL__"></script>
   </body>

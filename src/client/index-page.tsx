@@ -2,9 +2,10 @@ import { hydrateRoot } from 'react-dom/client'
 
 import { BooksPage, type BookSummary } from '@/client/BooksPage'
 
+// tokens.css must load before index.css - both target html/body at equal specificity
+import '@/runtime/tokens.css'
 import '@/runtime/fonts.css'
 import '@/runtime/index.css'
-import '@/runtime/tokens.css'
 
 declare global {
   interface Window {

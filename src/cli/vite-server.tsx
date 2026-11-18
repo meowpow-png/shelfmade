@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { createServer, type ViteDevServer } from 'vite'
+import { createServer, type Plugin, type ViteDevServer } from 'vite'
 
 import { resolveBooksViaVite } from '@/engine/books'
 import { renderPageSize } from '@/engine/document'
@@ -15,6 +15,9 @@ import { PAGED_POLYFILL, RUNTIME_DIR } from '@/engine/render'
 // src/ next to dist/ when built, or this package's own src/ in dev
 const SRC_DIR = resolve(__dirname, '../../src')
 const PACKAGE_ROOT = resolve(__dirname, '../..')
+
+// Collapses a burst of module-invalidation events into one remount; not book-project configurable
+export const PREVIEW_REMOUNT_DEBOUNCE_MS = 200
 
 // Served as-is, bypassing Vite's transform pipeline
 const MIME_TYPES: Record<string, string> = {
@@ -30,6 +33,32 @@ const MIME_TYPES: Record<string, string> = {
   '.woff': 'font/woff',
 }
 
+// Runs before Vite's static/transform middleware (via configureServer).
+// pagedjs's Polisher re-fetches book stylesheets via a plain XHR (no Accept:
+// text/css), so Vite would otherwise serve them as JS modules. Scoped to
+// .css only - other book assets still need Vite's transform
+function shelfmadeBookStylesheets(root: string): Plugin {
+  return {
+    name: 'shelfmade-book-stylesheets',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const match =
+          request.method === 'GET' ? /^\/books\/([^/]+)\/(.+\.css)$/.exec(request.url ?? '') : null
+        const [, slug, assetPath] = match ?? []
+
+        if (slug === undefined || assetPath === undefined) {
+          next()
+          return
+        }
+
+        serveBookAsset(server, root, slug, assetPath, response, next).catch((error: unknown) =>
+          next(error instanceof Error ? error : new Error(String(error))),
+        )
+      })
+    },
+  }
+}
+
 export async function startViteServer(root: string, port: number): Promise<ViteDevServer> {
   const server = await createServer({
     root,
@@ -43,6 +72,7 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     // shelfmade's CJS named exports resolve
     optimizeDeps: { include: ['shelfmade'] },
     plugins: [
+      shelfmadeBookStylesheets(root),
       react(),
       mdx({ remarkPlugins: [remarkFrontmatter, [remarkMdxFrontmatter, { name: 'frontmatter' }]] }),
     ],
@@ -185,11 +215,11 @@ async function serveBookPage(server: ViteDevServer, root: string, slug: string, 
     __SHELFMADE_STYLESHEETS__: stylesheets,
     __SHELFMADE_BOOK_ROOT__: body,
     __SHELFMADE_SLUG_JSON__: JSON.stringify(slug),
+    __SHELFMADE_DEBOUNCE_MS__: String(PREVIEW_REMOUNT_DEBOUNCE_MS),
     __SHELFMADE_ENTRY_URL__: `/@fs${resolve(SRC_DIR, 'client/book-page.tsx')}`,
   })
 
-  // transformIndexHtml also injects Vite's HMR client, which gets
-  // intercepted once remount logic lands
+  // transformIndexHtml also injects Vite's HMR client, intercepted once remount logic lands
   return server.transformIndexHtml(url, html)
 }
 

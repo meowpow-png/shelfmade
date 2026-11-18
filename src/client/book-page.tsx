@@ -2,30 +2,119 @@ import { createRoot } from 'react-dom/client'
 
 import { resolveBookInBrowser } from '@/client/resolve-book'
 
+interface Previewer {
+  preview(content: Node, stylesheets: unknown[], renderTo: HTMLElement): Promise<unknown>
+  removeStyles(): unknown[]
+  chunker: { removePages(): void }
+}
+
 declare global {
   interface Window {
     __SHELFMADE_BOOK_SLUG__: string
-    // Exposed by paged.polyfill as the Previewer instance; called manually
-    // since PagedConfig.auto is false in dev
-    PagedPolyfill?: { preview: () => Promise<unknown> }
+    __SHELFMADE_REMOUNT_DEBOUNCE_MS__: number
+    PAGED_READY?: boolean
+    // Fresh instance per mount - a Previewer rebuilds pages in place on reuse
+    Paged: { Previewer: new () => Previewer }
   }
 }
 
 const container = document.getElementById('book-root')
 
 if (container) {
-  mount(container)
+  scheduleMount(container)
 }
 
+// Self-accepting avoids Vite's full-page-reload fallback on chapter/config changes
+if (import.meta.hot) {
+  import.meta.hot.accept()
+}
+
+// Debounces saves into one remount; timer lives on hot.data since module scope resets on reload
+function scheduleMount(container: HTMLElement) {
+  const hot = import.meta.hot
+  if (!hot) {
+    mount(container)
+    return
+  }
+
+  if (!hot.data.initialized) {
+    hot.data.initialized = true
+    mount(container)
+    return
+  }
+
+  clearTimeout(hot.data.remountTimer)
+  hot.data.remountTimer = setTimeout(
+    () => mount(container),
+    window.__SHELFMADE_REMOUNT_DEBOUNCE_MS__,
+  )
+}
+
+// removeStyles() strips print stylesheets once; cached since later passes find nothing left
+let stylesheets: unknown[] | undefined
+
 async function mount(container: HTMLElement) {
+  window.PAGED_READY = false
+
   const book = await resolveBookInBrowser(window.__SHELFMADE_BOOK_SLUG__)
   if (!book) return
 
   const { App } = book
-  createRoot(container).render(<App />)
 
-  // One frame so layout settles before paged.js measures it
-  requestAnimationFrame(() => {
-    window.PagedPolyfill?.preview()
-  })
+  // Off-screen so the old pages stay visible until the swap
+  const scratch = offscreenContainer()
+  const root = createRoot(scratch)
+  root.render(<App />)
+  await nextFrame()
+  await waitForImages(scratch)
+
+  const previewer = new window.Paged.Previewer()
+  // hot.data, not module scope - HMR resets module scope on every accepted update
+  const hot = import.meta.hot
+  if (hot) {
+    hot.data.stylesheets ??= previewer.removeStyles()
+  } else {
+    stylesheets ??= previewer.removeStyles()
+  }
+  const activeStylesheets: unknown[] = hot ? hot.data.stylesheets : stylesheets
+
+  const renderTarget = offscreenContainer()
+
+  // A fragment, not scratch itself - pagedjs clones DOM ancestors when
+  // rebuilding pages, which would leak scratch's hidden/fixed style in
+  const content = document.createDocumentFragment()
+  content.append(...Array.from(scratch.childNodes).map((node) => node.cloneNode(true)))
+
+  await previewer.preview(content, activeStylesheets, renderTarget)
+
+  const pages = renderTarget.firstElementChild
+  if (pages) container.replaceChildren(pages)
+  window.PAGED_READY = true
+
+  // Disconnects the old pages' ResizeObservers - they'd otherwise leak one per remount
+  if (hot) {
+    hot.data.previewer?.chunker.removePages()
+    hot.data.previewer = previewer
+  }
+
+  root.unmount()
+  scratch.remove()
+  renderTarget.remove()
+}
+
+function offscreenContainer() {
+  const element = document.createElement('div')
+  element.style.cssText = 'position: fixed; top: 0; left: 0; visibility: hidden;'
+  document.body.appendChild(element)
+  return element
+}
+
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(resolve))
+}
+
+// Avoids pagedjs measuring page height before images load and reflowing later
+function waitForImages(container: HTMLElement) {
+  const images = Array.from(container.querySelectorAll('img'))
+  return Promise.all(images.map((img) => img.decode().catch(() => {})))
 }
