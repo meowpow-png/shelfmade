@@ -95,6 +95,15 @@ async function mount(container: HTMLElement) {
 
   await previewer.preview(content, activeStylesheets, renderTarget)
 
+  // Disconnects the old pages' ResizeObservers and removes its injected
+  // <style> tags, before the swap below - otherwise old and new
+  // pagedjs-inserted styles are both active across the swap
+  if (hot) {
+    hot.data.previewer?.chunker.removePages()
+    hot.data.previewer?.polisher.inserted.forEach((style: HTMLStyleElement) => style.remove())
+    hot.data.previewer = previewer
+  }
+
   const pages = renderTarget.firstElementChild
   if (pages) container.replaceChildren(pages)
   // Reveals book-root - hidden since the initial HTML so the unpaginated
@@ -102,14 +111,6 @@ async function mount(container: HTMLElement) {
   // never shown; a no-op once already revealed by an earlier mount
   container.style.visibility = ''
   window.PAGED_READY = true
-
-  // Disconnects the old pages' ResizeObservers and removes its injected
-  // <style> tags - both would otherwise leak one set per remount
-  if (hot) {
-    hot.data.previewer?.chunker.removePages()
-    hot.data.previewer?.polisher.inserted.forEach((style: HTMLStyleElement) => style.remove())
-    hot.data.previewer = previewer
-  }
 
   root.unmount()
   scratch.remove()
