@@ -17,7 +17,7 @@ const SRC_DIR = resolve(__dirname, '../../src')
 const PACKAGE_ROOT = resolve(__dirname, '../..')
 
 // Collapses a burst of module-invalidation events into one remount; not book-project configurable
-export const PREVIEW_REMOUNT_DEBOUNCE_MS = 200
+const PREVIEW_REMOUNT_DEBOUNCE_MS = 200
 
 // Served as-is, bypassing Vite's transform pipeline
 const MIME_TYPES: Record<string, string> = {
