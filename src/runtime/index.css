@@ -10,31 +10,6 @@ body {
   font-family: var(--font-sans);
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 32px;
-  border-bottom: 1px solid var(--color-divider);
-}
-
-.topbar-wordmark {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.topbar-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--color-divider);
-}
-
-.topbar-label {
-  font-size: 18px;
-  color: var(--color-text-secondary);
-}
-
 .books-page {
   max-width: 1040px;
   margin: 0 auto;

@@ -49,14 +49,11 @@ export function renderIndex(body: string) {
     <title>Books</title>
     <link rel="stylesheet" href="shelfmade/tokens.css" />
     <link rel="stylesheet" href="shelfmade/fonts.css" />
+    <link rel="stylesheet" href="shelfmade/topbar.css" />
     <link rel="stylesheet" href="shelfmade/index.css" />
   </head>
   <body>
-    <div class="topbar">
-      <p class="topbar-wordmark">Shelfmade</p>
-      <div class="topbar-divider"></div>
-      <span class="topbar-label">Books</span>
-    </div>
+    ${renderTopbar('Books')}
     ${body}
   </body>
 </html>
@@ -67,4 +64,12 @@ export function renderIndex(body: string) {
 // but book styles can still override this
 export function renderPageSize({ width, height }: PageSize) {
   return `:root { --page-width: ${width}; --page-height: ${height}; } @page { size: ${width} ${height}; }`
+}
+
+export function renderTopbar(label: string) {
+  return `<div class="topbar">
+      <p class="topbar-wordmark">Shelfmade</p>
+      <div class="topbar-divider"></div>
+      <span class="topbar-label">${label}</span>
+    </div>`
 }
