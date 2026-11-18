@@ -2,12 +2,7 @@ import { createElement, type ComponentType, type FunctionComponent } from 'react
 
 import { DefaultLayout } from '@/client/default-layout'
 import { resolvePageSize, type PageSize } from '@/engine/page-format'
-import {
-  type Chapter,
-  type Components,
-  type Frontmatter,
-  type ShelfmadeConfig,
-} from '@/config'
+import { type Chapter, type Components, type Frontmatter, type ShelfmadeConfig } from '@/config'
 
 export interface ClientBook {
   slug: string
