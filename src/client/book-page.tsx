@@ -1,7 +1,7 @@
 import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 
-import { Editor } from '@/client/Editor'
+import { Editor, type EditorChapter } from '@/client/Editor'
 import { resolveBookInBrowser } from '@/client/resolve-book'
 
 interface Previewer {
@@ -21,6 +21,7 @@ declare global {
   interface Window {
     __SHELFMADE_BOOK_SLUG__: string
     __SHELFMADE_REMOUNT_DEBOUNCE_MS__: number
+    __SHELFMADE_CHAPTERS__: EditorChapter[]
     PAGED_READY?: boolean
   }
 }
@@ -46,7 +47,13 @@ if (import.meta.hot) {
 function mountEditor(container: HTMLElement) {
   const hot = import.meta.hot
   const root = hot ? (hot.data.editorRoot ??= createRoot(container)) : createRoot(container)
-  root.render(<Editor />)
+  root.render(
+    <Editor
+      chapters={window.__SHELFMADE_CHAPTERS__}
+      bookSlug={window.__SHELFMADE_BOOK_SLUG__}
+      saveDebounceMs={window.__SHELFMADE_REMOUNT_DEBOUNCE_MS__}
+    />,
+  )
 }
 
 // Debounces saves into one remount; timer lives on hot.data since module scope resets on reload

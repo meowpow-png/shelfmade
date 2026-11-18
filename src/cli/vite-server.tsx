@@ -1,5 +1,5 @@
-import { createReadStream, existsSync, readdirSync, readFileSync } from 'node:fs'
-import { type ServerResponse } from 'node:http'
+import { createReadStream, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { type IncomingMessage, type ServerResponse } from 'node:http'
 import { extname, resolve } from 'node:path'
 import mdx from '@mdx-js/rollup'
 import react from '@vitejs/plugin-react'
@@ -148,6 +148,23 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     )
   })
 
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'PUT'
+        ? /^\/books\/([^/]+)\/chapters\/([^/]+)$/.exec(request.url ?? '')
+        : null
+    const [, slug, chapterSlug] = match ?? []
+
+    if (slug === undefined || chapterSlug === undefined) {
+      next()
+      return
+    }
+
+    saveChapter(server, root, slug, chapterSlug, request, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
   await server.listen()
   server.printUrls()
 
@@ -192,6 +209,39 @@ async function serveBookAsset(
   serveFile(resolve(book.dir, assetPath), response, next)
 }
 
+async function saveChapter(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  chapterSlug: string,
+  request: IncomingMessage,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+  const chapter = book?.chapters.find((candidate) => candidate.slug === chapterSlug)
+
+  if (!chapter) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  const content = await readRequestBody(request)
+  writeFileSync(chapter.path, content)
+  response.statusCode = 204
+  response.end()
+}
+
+function readRequestBody(request: IncomingMessage): Promise<string> {
+  return new Promise((resolveBody, reject) => {
+    const chunks: Buffer[] = []
+    request.on('data', (chunk: Buffer) => chunks.push(chunk))
+    request.on('end', () => resolveBody(Buffer.concat(chunks).toString('utf-8')))
+    request.on('error', reject)
+  })
+}
+
 async function serveBookPage(server: ViteDevServer, root: string, slug: string, url: string) {
   const books = await resolveBooksViaVite(server, root)
   const book = books.find((candidate) => candidate.slug === slug)
@@ -215,6 +265,10 @@ async function serveBookPage(server: ViteDevServer, root: string, slug: string, 
     __SHELFMADE_STYLESHEETS__: stylesheets,
     __SHELFMADE_BOOK_ROOT__: body,
     __SHELFMADE_TOPBAR__: renderTopbar('Visual Editor'),
+    // path is the save route's write target - server-side only, never sent to the browser
+    __SHELFMADE_CHAPTERS_JSON__: JSON.stringify(
+      book.chapters.map(({ slug, title, content }) => ({ slug, title, content })),
+    ),
     __SHELFMADE_SLUG_JSON__: JSON.stringify(slug),
     __SHELFMADE_DEBOUNCE_MS__: String(PREVIEW_REMOUNT_DEBOUNCE_MS),
     __SHELFMADE_ENTRY_URL__: `/@fs${resolve(SRC_DIR, 'client/book-page.tsx')}`,

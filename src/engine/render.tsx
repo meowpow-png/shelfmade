@@ -15,6 +15,9 @@ export interface Book {
   lang: string
   pageSize: PageSize
   dir: string
+  // Raw chapter text for the editor - separate from App, which only renders the compiled MDX.
+  // path is server-side only (the save route's write target), never sent to the browser
+  chapters: { slug: string; title: string; content: string; path: string }[]
   App: ComponentType
 }
 

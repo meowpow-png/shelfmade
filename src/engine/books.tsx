@@ -24,8 +24,9 @@ export async function resolveBooksViaVite(server: ViteDevServer, root: string): 
 export function resolveBooks(config: ShelfmadeConfig, root: string): Book[] {
   return Object.entries(config.books).map(([slug, book]) => {
     const dir = resolve(root, book.dir ?? join('books', slug))
+    const contentDir = resolve(dir, book.content ?? 'content')
     const components = { ...config.components, ...book.components }
-    const chapters = readChapters(resolve(dir, book.content ?? 'content'), components)
+    const chapters = readChapters(contentDir, components)
     const Layout = book.App ?? DefaultLayout
 
     return {
@@ -35,6 +36,13 @@ export function resolveBooks(config: ShelfmadeConfig, root: string): Book[] {
       lang: book.lang ?? config.lang ?? 'en',
       pageSize: resolvePageSize(book.pageFormat ?? config.pageFormat ?? 'A5'),
       dir,
+      // path is for vite-server.tsx's save route only - never sent to the browser
+      chapters: chapters.map(({ slug, frontmatter, content }) => ({
+        slug,
+        title: typeof frontmatter.title === 'string' ? frontmatter.title : slug,
+        content,
+        path: join(contentDir, `${slug}.mdx`),
+      })),
       App: () => <Layout title={book.title} chapters={chapters} />,
     }
   })
@@ -48,11 +56,12 @@ function readChapters(contentDir: string, components: Components): Chapter[] {
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
       .map((file) => {
         const path = join(contentDir, file)
-        const { default: Content, frontmatter } = readMdx(path)
+        const { default: Content, frontmatter, source } = readMdx(path)
 
         return {
           slug: basename(file, '.mdx'),
           frontmatter: (frontmatter ?? {}) as Chapter['frontmatter'],
+          content: source,
           // Called directly rather than rendered as <Content />, so errors MDX
           // raises while rendering (like a missing component) name the chapter
           Body: () => {

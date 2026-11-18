@@ -10,6 +10,7 @@ export type PageFormat = 'A4' | 'A5' | 'A6' | 'Letter' | { width: string; height
 export interface Chapter {
   slug: string
   frontmatter: Frontmatter
+  content: string
   Body: ComponentType
 }
 

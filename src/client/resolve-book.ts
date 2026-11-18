@@ -20,6 +20,8 @@ interface MdxModule {
 
 // Puts every chapter in Vite's module graph so edits invalidate it (the Node engine reads via fs instead)
 const CHAPTER_MODULES = import.meta.glob<MdxModule>('/**/*.mdx')
+// Separate glob for the raw text - the compiled module above has no access to its own source
+const CHAPTER_SOURCES = import.meta.glob('/**/*.mdx', { query: '?raw', import: 'default' })
 
 export async function resolveBookInBrowser(slug: string): Promise<ClientBook | null> {
   // Literal specifier for Vite's HMR graph; path only exists in the served project, hence the assertion
@@ -56,14 +58,16 @@ async function resolveChapters(contentDir: string, components: Components): Prom
 
   for (const path of paths) {
     const load = CHAPTER_MODULES[path]
-    if (!load) continue
+    const loadSource = CHAPTER_SOURCES[path]
+    if (!load || !loadSource) continue
 
-    const { default: Content, frontmatter } = await load()
+    const [{ default: Content, frontmatter }, content] = await Promise.all([load(), loadSource()])
     const slug = path.slice(contentDir.length + 1).replace(/\.mdx$/, '')
 
     chapters.push({
       slug,
       frontmatter: frontmatter ?? {},
+      content,
       Body: () => Content({ components }),
     })
   }
