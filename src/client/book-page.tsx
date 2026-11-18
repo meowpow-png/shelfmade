@@ -1,6 +1,7 @@
 import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 
+import { Editor } from '@/client/Editor'
 import { resolveBookInBrowser } from '@/client/resolve-book'
 
 interface Previewer {
@@ -30,9 +31,22 @@ if (container) {
   scheduleMount(container)
 }
 
+const editorContainer = document.getElementById('editor-root')
+
+if (editorContainer) {
+  mountEditor(editorContainer)
+}
+
 // Self-accepting avoids Vite's full-page-reload fallback on chapter/config changes
 if (import.meta.hot) {
   import.meta.hot.accept()
+}
+
+// Root is cached on hot.data - re-running createRoot on the same container on every remount warns
+function mountEditor(container: HTMLElement) {
+  const hot = import.meta.hot
+  const root = hot ? (hot.data.editorRoot ??= createRoot(container)) : createRoot(container)
+  root.render(<Editor />)
 }
 
 // Debounces saves into one remount; timer lives on hot.data since module scope resets on reload
