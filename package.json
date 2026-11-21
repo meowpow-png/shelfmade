@@ -1,6 +1,6 @@
 {
   "name": "shelfmade",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A CLI for turning MDX content and reusable components into print-ready books.",
   "license": "MIT",
   "author": {
@@ -37,6 +37,9 @@
   "files": [
     "bin",
     "dist",
+    "src/assets",
+    "src/client",
+    "src/runtime",
     "template"
   ],
   "engines": {
@@ -46,7 +49,7 @@
   "scripts": {
     "prepare": "lefthook install",
     "clean": "rm -rf node_modules dist",
-    "build": "tsc && tsc-alias && cp -r src/runtime dist/",
+    "build": "tsc && tsc-alias && cp -r src/runtime dist/ && cp -r src/assets dist/",
     "prepack": "rm -rf dist && npm run build",
     "test": "playwright test",
     "sample:install": "npm install --prefix examples/sample-book --no-audit --no-fund --ignore-scripts --silent",
@@ -61,20 +64,23 @@
     "lint:fix:eslint": "eslint . --fix",
     "lint:fix:stylelint": "stylelint \"**/*.css\" --allow-empty-input --fix",
     "lint:fix": "run-s --continue-on-error lint:fix:eslint lint:fix:stylelint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/client",
     "knip": "knip",
     "qualitycheck": "run-s --continue-on-error format:check lint typecheck build knip"
   },
   "dependencies": {
     "@mdx-js/mdx": "^3.1.1",
+    "@mdx-js/rollup": "^3.1.1",
     "@types/mdx": "^2.0.14",
+    "@vitejs/plugin-react": "^6.3.0",
     "esbuild": "^0.28.2",
     "pagedjs": "0.4.3",
     "playwright": "^1.65.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "remark-frontmatter": "^5.0.0",
-    "remark-mdx-frontmatter": "^5.2.0"
+    "remark-mdx-frontmatter": "^5.2.0",
+    "vite": "^8.3.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

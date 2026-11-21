@@ -31,8 +31,8 @@ A real book has shipped through Shelfmade, with the same page count and breaks a
 
 **Steps:**
 
-- [ ] Choose a licence
-- [ ] Publish the package on npm
+- [x] Choose a licence
+- [x] Publish the package on npm
 
 **Done when:**
 
@@ -40,7 +40,20 @@ Anyone can install and start a book without a local checkout of Shelfmade.
 
 ## Visual editor
 
-A two-pane app replaces the terminal workflow: write content on one side and watch a live preview update on the other, with a toggle between a fast draft view and an accurate, paginated view.
+A two-pane app replaces the terminal workflow: write content on one side and watch an accurate, paginated preview update on the other.
+
+**Steps:**
+
+- [x] Browse your books from a visual index, instead of a folder listing
+- [x] Open a book into a two-pane editor: content on one side, a live paginated preview on the other
+- [x] Edit chapter content and have it save automatically, with the preview staying in sync
+- [ ] Switch between chapters from a collapsible sidebar, instead of scrolling through all of them at once
+- [ ] See a clear saved/unsaved status while editing
+- [ ] Recover gracefully when a save fails
+
+**Done when:**
+
+You can write and preview an entire book from the editor, without touching the terminal.
 
 ## AI design & drafting
 

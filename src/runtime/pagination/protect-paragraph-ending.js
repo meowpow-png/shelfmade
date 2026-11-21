@@ -47,6 +47,12 @@
     range.insertNode(document.createTextNode('\u00a0'))
   }
 
+  // No wrapping element: pagedjs's findBreakToken drops content when an
+  // overflow boundary lands at an element's start rather than mid-text-node.
+  // A word joiner (U+2060) between characters blocks line breaks and defeats
+  // dictionary hyphenation as plain text, replacing the old wrapper's
+  // `hyphens: none` + `white-space: nowrap`. Existing soft hyphens are
+  // stripped as a redundant manual break point.
   function keepLastWordIntact(paragraph) {
     const lastWord = wordsIn(paragraph).at(-1)
     if (!lastWord) return
@@ -59,10 +65,14 @@
     range.setStart(start.node, start.offset)
     range.setEnd(end.node, end.offset)
 
-    const wrapper = document.createElement('span')
-    wrapper.className = 'pagination-intact-ending'
-    wrapper.append(range.extractContents())
-    range.insertNode(wrapper)
+    const SOFT_HYPHEN = '\u00ad'
+    const WORD_JOINER = '\u2060'
+    const protectedWord = [...lastWord[0]]
+      .filter((character) => character !== SOFT_HYPHEN)
+      .join(WORD_JOINER)
+
+    range.deleteContents()
+    range.insertNode(document.createTextNode(protectedWord))
   }
 
   class ProtectParagraphEnding extends window.Paged.Handler {

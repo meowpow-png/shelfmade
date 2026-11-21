@@ -1,5 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/runtime/pagination/*.js"],
-  "ignore": ["examples/**", "template/**"]
+  "entry": [
+    "src/runtime/pagination/*.js",
+    "src/client/book-page.tsx",
+    "src/client/index-page.tsx",
+    "src/client/render-index.tsx",
+    "src/client/render-book.tsx"
+  ],
+  "ignore": ["examples/**", "template/**"],
+  "ignoreUnresolved": ["^/shelfmade\\.config\\.ts$"]
 }

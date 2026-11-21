@@ -47,18 +47,29 @@ export function renderIndex(body: string) {
   <head>
     <meta charset="UTF-8" />
     <title>Books</title>
+    <link rel="stylesheet" href="shelfmade/tokens.css" />
+    <link rel="stylesheet" href="shelfmade/fonts.css" />
+    <link rel="stylesheet" href="shelfmade/topbar.css" />
+    <link rel="stylesheet" href="shelfmade/index.css" />
   </head>
   <body>
-    <h1>Books</h1>
+    ${renderTopbar('Books')}
     ${body}
   </body>
 </html>
 `
 }
 
-// The page size sits between the runtime and book stylesheets,
-// so it overrides the runtime's A5 default while the
-// book's stylesheets can still override it
-function renderPageSize({ width, height }: PageSize) {
+// Sits between runtime and book stylesheets: overrides the runtime default,
+// but book styles can still override this
+export function renderPageSize({ width, height }: PageSize) {
   return `:root { --page-width: ${width}; --page-height: ${height}; } @page { size: ${width} ${height}; }`
+}
+
+export function renderTopbar(label: string) {
+  return `<div class="topbar">
+      <p class="topbar-wordmark">Shelfmade</p>
+      <div class="topbar-divider"></div>
+      <span class="topbar-label">${label}</span>
+    </div>`
 }

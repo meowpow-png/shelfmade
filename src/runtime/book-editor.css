@@ -1,0 +1,63 @@
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: 100vh;
+  background: var(--color-text-primary);
+}
+
+.editor-layout {
+  display: flex;
+  flex: 1;
+
+  /* Without this, the row refuses to shrink below its content's height
+     (flex items default to min-height: auto along the column's main axis),
+     so .preview's overflow would never kick in - it'd just grow past 100vh instead */
+  min-height: 0;
+}
+
+#editor-root {
+  width: 50%;
+  overflow-y: auto;
+  background: var(--color-background);
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px;
+}
+
+.editor-chapter {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 320px;
+  padding: 16px;
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.preview {
+  width: 50%;
+  display: flex;
+
+  /* Plain "center" clips overflowing content on the start side and makes it
+     unreachable by scrolling - "safe" falls back to start-alignment once the
+     content overflows, so every page stays reachable */
+  align-items: safe center;
+  overflow-y: auto;
+  background: var(--color-text-primary);
+}
+
+#book-root {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 48px 32px 43px;
+}
