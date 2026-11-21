@@ -69,7 +69,7 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     ssr: { external: ['shelfmade'] },
     // Same linked-package issue for the browser: forces pre-bundling so
     // shelfmade's CJS named exports resolve
-    optimizeDeps: { include: ['shelfmade'] },
+    optimizeDeps: { include: ['shelfmade'], exclude: ['@'] },
     plugins: [
       shelfmadeBookStylesheets(root),
       react(),
