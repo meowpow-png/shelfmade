@@ -44,7 +44,7 @@ npm run typecheck
 
 ## Build
 
-The build script runs `tsc`, then `tsc-alias`, then copies `src/runtime` into `dist/runtime`. So it doubles as a check that path aliases resolve correctly, not just that types are valid, and it's also what makes the published package runnable: the engine loads the runtime's pagination rules and styles from that copied output.
+The build script runs `tsc`, then `tsc-alias`, then copies `src/runtime` and `src/assets` into `dist/`. So it doubles as a check that path aliases resolve correctly, not just that types are valid, and it's also what makes the published package runnable: the engine loads the runtime's pagination rules and styles from that copied output.
 
 ```sh
 npm run build
