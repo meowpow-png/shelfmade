@@ -39,6 +39,7 @@
     "dist",
     "src/assets",
     "src/client",
+    "src/engine/page-format.ts",
     "src/runtime",
     "template"
   ],
