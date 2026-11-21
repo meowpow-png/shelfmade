@@ -20,3 +20,6 @@ playwright-report/
 
 # Obsidian
 .obsidian/
+
+# Design references
+design/
