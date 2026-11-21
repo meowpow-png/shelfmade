@@ -1,5 +1,10 @@
 # Shelfmade
 
+[![CI](https://github.com/meowpow-png/shelfmade/actions/workflows/ci.yml/badge.svg)](https://github.com/meowpow-png/shelfmade/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/shelfmade.svg)](https://www.npmjs.com/package/shelfmade)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
+![React](https://img.shields.io/badge/React-3f444c?logo=react)
+
 Shelfmade is a command-line tool for building print-ready books. You write content in MDX and design in reusable components, preview the result with live reload, and export a paginated, print-accurate PDF.
 
 ## What is Shelfmade?
