@@ -5,7 +5,7 @@ export const editorTheme = EditorView.theme({
     color: 'var(--color-text-primary)',
     backgroundColor: 'transparent',
     fontFamily: 'var(--font-sans)',
-    fontSize: '16px',
+    fontSize: 'var(--editor-font-size)',
   },
   '&.cm-focused': {
     outline: 'none',
