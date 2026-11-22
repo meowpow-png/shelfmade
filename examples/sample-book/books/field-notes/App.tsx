@@ -7,8 +7,8 @@ export function App({ title, chapters }: LayoutProps) {
         <img className="cover-background" src="books/field-notes/cover.svg" alt={title} />
       </section>
       {chapters.map(({ slug, frontmatter, Body }) => (
-        <section key={slug} className="chapter" data-chapter={String(frontmatter.chapter)}>
-          <p className="chapter-label">{String(frontmatter.chapter)}</p>
+        <section key={slug} className="chapter" data-chapter={String(frontmatter.title)}>
+          <p className="chapter-label">{String(frontmatter.title)}</p>
           <Body />
         </section>
       ))}
