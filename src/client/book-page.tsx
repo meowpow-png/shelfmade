@@ -128,7 +128,8 @@ async function mount(container: HTMLElement) {
   ])
 
   await repaginate(computeFrame, displayFrame)
-  displayFrame.style.cssText = 'width: 100%; height: 100%; border: 0;'
+  // display:block avoids default inline's baseline descender gap, which overflowed the page
+  displayFrame.style.cssText = 'display: block; width: 100%; height: 100%; border: 0;'
   container.style.visibility = ''
 }
 
