@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 
@@ -38,22 +38,18 @@ function getEditorViewCache(): Map<string, EditorView> {
   return (moduleEditorViews ??= new Map())
 }
 
-export function Editor({ chapters: initialChapters, bookSlug, saveDebounceMs }: EditorProps) {
-  const [chapters, setChapters] = useState(initialChapters)
+export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
+  // Captured once per chapter - re-splitting on every save let body blank lines leak into it
+  const frontmatterBySlug = useRef(
+    Object.fromEntries(
+      chapters.map((chapter) => [chapter.slug, splitFrontmatter(chapter.content).frontmatter]),
+    ),
+  ).current
   // One timer per chapter, so editing one doesn't reset another's pending save
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   function handleBodyChange(chapterSlug: string, body: string) {
-    const { frontmatter } = splitFrontmatter(
-      chapters.find((chapter) => chapter.slug === chapterSlug)!.content,
-    )
-    const content = frontmatter + body
-
-    setChapters((current) =>
-      current.map((candidate) =>
-        candidate.slug === chapterSlug ? { ...candidate, content } : candidate,
-      ),
-    )
+    const content = frontmatterBySlug[chapterSlug] + body
 
     clearTimeout(saveTimers.current[chapterSlug])
     saveTimers.current[chapterSlug] = setTimeout(() => {
