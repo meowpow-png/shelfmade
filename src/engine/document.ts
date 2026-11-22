@@ -32,8 +32,15 @@ export function renderDocument(
   const pagedConfig = autoPaginate
     ? '{ after: () => { window.PAGED_READY = true } }'
     : '{ after: () => { window.PAGED_READY = true }, auto: false }'
+  // Firefox throttles rAF to ~1fps in this hidden frame,
+  // stalling pagination - use setTimeout instead
+  const rafOverride = !autoPaginate
+    ? `    <script>
+      window.requestAnimationFrame = function(cb) { return setTimeout(function() { cb(performance.now()); }, 0); };
+    </script>\n`
+    : ''
   const scripts = includeScripts
-    ? `    <script>window.PagedConfig = ${pagedConfig};</script>
+    ? `${rafOverride}    <script>window.PagedConfig = ${pagedConfig};</script>
     <script src="shelfmade/vendor/paged.polyfill.min.js"></script>
     <script src="shelfmade/pagination/break-token.js"></script>
     <script src="shelfmade/pagination/measurement.js"></script>
