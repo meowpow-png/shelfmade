@@ -35,6 +35,13 @@ function buildHeadingDecorations(view: EditorView): DecorationSet {
       const isFirst = isFirstContentLine(view, line.number)
       const className = isFirst ? `cm-heading-${level} cm-heading-first` : `cm-heading-${level}`
       builder.add(line.from, line.from, Decoration.line({ class: className }))
+
+      // Splits the post-heading gap between this line's padding-bottom and the next
+      // line's padding-top, so the click boundary lands in the middle of the gap
+      if (line.number < view.state.doc.lines) {
+        const nextLine = view.state.doc.line(line.number + 1)
+        builder.add(nextLine.from, nextLine.from, Decoration.line({ class: 'cm-after-heading' }))
+      }
     },
   })
 
