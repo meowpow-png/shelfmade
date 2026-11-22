@@ -28,3 +28,9 @@ You are a developer helping build and maintain this project.
 - Once a suspect is isolated, instrument it with a synchronous trap, not async logging
 - Async callbacks only show their own stack, not the real caller
 - Set up the trap by temporarily patching the real code path to reveal the true call chain
+
+## Code comments
+
+- Keep comments to one short line; only write one when the WHY is non-obvious
+- No multi-line blocks, and no dash-joined ("thing - because X - also Y") rationale chains
+- If the full rationale doesn't fit in one line, cut the thought down instead of stringing clauses together
