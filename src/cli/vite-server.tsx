@@ -279,6 +279,8 @@ function serveFile(path: string, response: ServerResponse, next: () => void) {
 
   const contentType = MIME_TYPES[extname(path)]
   if (contentType) response.setHeader('Content-Type', contentType)
+  // Guard against a stale cached response, same as the HTML-serving route
+  response.setHeader('Cache-Control', 'no-store')
   createReadStream(path).pipe(response)
 }
 
