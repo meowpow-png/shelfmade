@@ -4,7 +4,7 @@ import { EditorView } from '@codemirror/view'
 
 import { baseExtensions } from '@/client/editor-extensions'
 import { editorTheme } from '@/client/editor-theme'
-import { headingHighlight, headingStyles } from '@/client/heading-highlight'
+import { headingHighlight } from '@/client/heading-highlight'
 
 export interface EditorChapter {
   slug: string
@@ -84,14 +84,8 @@ interface ChapterEditorProps {
   onChange: (value: string) => void
 }
 
-// Title lives in frontmatter, not a literal body line, so it's rendered separately from CM6
 function ChapterTitle({ title }: { title: string }) {
-  const { fontWeight, fontSize } = headingStyles[0]
-  return (
-    <div className="editor-chapter-title" style={{ fontWeight, fontSize }}>
-      # {title}
-    </div>
-  )
+  return <div className="editor-chapter-title">{title}</div>
 }
 
 function ChapterEditor({ slug, title, initialValue, onChange }: ChapterEditorProps) {
