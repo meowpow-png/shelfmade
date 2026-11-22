@@ -73,19 +73,19 @@ function fetchChapters(bookSlug: string): Promise<EditorChapter[]> {
 function scheduleMount(container: HTMLElement) {
   const hot = import.meta.hot
   if (!hot) {
-    mount(container)
+    requestMount(container)
     return
   }
 
   if (!hot.data.initialized) {
     hot.data.initialized = true
-    mount(container)
+    requestMount(container)
     return
   }
 
   clearTimeout(hot.data.remountTimer)
   hot.data.remountTimer = setTimeout(
-    () => mount(container),
+    () => requestMount(container),
     window.__SHELFMADE_REMOUNT_DEBOUNCE_MS__,
   )
 }
@@ -96,6 +96,30 @@ let displayFramePromise: Promise<HTMLIFrameElement> | undefined
 let stylesheets: unknown[] | undefined
 let previewer: Previewer | undefined
 let displayStyles: HTMLStyleElement[] | undefined
+let mountState: { mounting: boolean; pending: boolean } | undefined
+
+// Coalesces mounts that land while one is already running into a single rerun after,
+// so repaginate() never races itself over shared frame state.
+function requestMount(container: HTMLElement) {
+  const hot = import.meta.hot
+  const state = hot
+    ? (hot.data.mountState ??= { mounting: false, pending: false })
+    : (mountState ??= { mounting: false, pending: false })
+
+  if (state.mounting) {
+    state.pending = true
+    return
+  }
+
+  state.mounting = true
+  mount(container).finally(() => {
+    state.mounting = false
+    if (state.pending) {
+      state.pending = false
+      requestMount(container)
+    }
+  })
+}
 
 async function mount(container: HTMLElement) {
   const [computeFrame, displayFrame] = await Promise.all([
