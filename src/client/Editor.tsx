@@ -1,4 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { EditorState } from '@codemirror/state'
+import { EditorView } from '@codemirror/view'
+
+import { baseExtensions } from '@/client/editor-extensions'
+import { editorTheme } from '@/client/editor-theme'
+import { headingHighlight } from '@/client/heading-highlight'
 
 export interface EditorChapter {
   slug: string
@@ -12,8 +18,8 @@ interface EditorProps {
   saveDebounceMs: number
 }
 
-// Chapter content is the raw MDX source, frontmatter included. The editor only
-// shows/edits the body - frontmatter is carried along untouched on save.
+// Content includes frontmatter;
+// editor shows/edits body only, frontmatter re-attached on save.
 const FRONTMATTER_PATTERN = /^---\n[\s\S]*?\n---\n*/
 
 function splitFrontmatter(source: string): { frontmatter: string; body: string } {
@@ -21,6 +27,15 @@ function splitFrontmatter(source: string): { frontmatter: string; body: string }
   return match
     ? { frontmatter: match[0], body: source.slice(match[0].length) }
     : { frontmatter: '', body: source }
+}
+
+// Cached on hot.data: survives Editor's HMR remounts
+const hot = import.meta.hot
+let moduleEditorViews: Map<string, EditorView> | undefined
+
+function getEditorViewCache(): Map<string, EditorView> {
+  if (hot) return (hot.data.editorViews ??= new Map<string, EditorView>())
+  return (moduleEditorViews ??= new Map())
 }
 
 export function Editor({ chapters: initialChapters, bookSlug, saveDebounceMs }: EditorProps) {
@@ -53,14 +68,60 @@ export function Editor({ chapters: initialChapters, bookSlug, saveDebounceMs }: 
       {chapters.map((chapter) => {
         const { body } = splitFrontmatter(chapter.content)
         return (
-          <textarea
+          <ChapterEditor
             key={chapter.slug}
-            className="editor-chapter"
-            value={body}
-            onChange={(event) => handleBodyChange(chapter.slug, event.target.value)}
+            slug={chapter.slug}
+            initialValue={body}
+            onChange={(value) => handleBodyChange(chapter.slug, value)}
           />
         )
       })}
     </div>
   )
+}
+
+interface ChapterEditorProps {
+  slug: string
+  initialValue: string
+  onChange: (value: string) => void
+}
+
+function ChapterEditor({ slug, initialValue, onChange }: ChapterEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  // Keeps onChange current without recreating the view
+  const onChangeRef = useRef(onChange)
+  useEffect(() => {
+    onChangeRef.current = onChange
+  })
+
+  useEffect(() => {
+    const views = getEditorViewCache()
+    const cached = views.get(slug)
+
+    if (cached) {
+      containerRef.current!.appendChild(cached.dom)
+      return
+    }
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: initialValue,
+        extensions: [
+          baseExtensions,
+          editorTheme,
+          headingHighlight,
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) onChangeRef.current(update.state.doc.toString())
+          }),
+        ],
+      }),
+      parent: containerRef.current!,
+    })
+    views.set(slug, view)
+
+    // View persists via cache; initialValue applies once, on first mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug])
+
+  return <div className="editor-chapter" ref={containerRef} />
 }
