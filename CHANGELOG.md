@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-22
+
+### Fixed
+
+- Dev server failing when Shelfmade is installed from npm
+- Index page hydration error
+
 ## [0.2.0] - 2026-11-21
 
 ### Added
@@ -37,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for multiple books and stylesheets in one project
 - MIT licence
 
-[Unreleased]: https://github.com/meowpow-png/shelfmade/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/meowpow-png/shelfmade/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/meowpow-png/shelfmade/releases/tag/v0.2.1
 [0.2.0]: https://github.com/meowpow-png/shelfmade/releases/tag/v0.2.0
 [0.1.0]: https://github.com/meowpow-png/shelfmade/releases/tag/v0.1.0

@@ -27,3 +27,8 @@ test:
 sample-pdf:
     @npm run sample:install
     @just playwright npm run sample:pdf
+
+# Pack and install into another project without saving it as a dependency
+[arg("project", help="Path to the target project")]
+pack-into project:
+    @./scripts/pack-into.sh {{ quote(project) }}
