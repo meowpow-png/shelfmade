@@ -10,7 +10,7 @@ let server: ViteDevServer
 let baseURL: string
 
 // Per-worker port - chromium and firefox projects run in parallel
-test.beforeAll(async (_fixtures, testInfo) => {
+test.beforeAll(async ({}, testInfo) => {
   const port = 8199 + testInfo.workerIndex
   server = await startViteServer(ROOT, port)
   baseURL = `http://127.0.0.1:${port}`
