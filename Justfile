@@ -23,10 +23,10 @@ playwright *args:
 test:
     @just playwright npm test
 
-# Print the sample book project to PDF
-sample-pdf:
-    @npm run sample:install
-    @just playwright npm run sample:pdf
+# Print example book project to PDF
+example-pdf:
+    @npm run example:install
+    @just playwright npm run example:pdf
 
 # Pack and install into another project without saving it as a dependency
 [arg("project", help="Path to the target project")]

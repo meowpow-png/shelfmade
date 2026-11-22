@@ -138,8 +138,8 @@ jobs:
         id: smoke
         continue-on-error: true
         run: |
-          npm run sample:install
-          npm run sample:build
+          npm run example:install
+          npm run example:build
 
       - name: Upload Playwright report and traces
         if: steps.test.outcome == 'failure'
