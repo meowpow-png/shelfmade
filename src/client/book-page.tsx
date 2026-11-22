@@ -1,4 +1,4 @@
-import { createRoot } from 'react-dom/client'
+import { createRoot, type Root } from 'react-dom/client'
 
 import { Editor, type EditorChapter } from '@/client/Editor'
 // Side-effect only - keeps chapter edits in Vite's module graph so HMR fires, see that file
@@ -44,13 +44,29 @@ if (import.meta.hot) {
 function mountEditor(container: HTMLElement) {
   const hot = import.meta.hot
   const root = hot ? (hot.data.editorRoot ??= createRoot(container)) : createRoot(container)
+
+  // window.__SHELFMADE_CHAPTERS__ is only fresh on this first call; later remounts need refetch
+  if (!hot || !hot.data.editorMounted) {
+    if (hot) hot.data.editorMounted = true
+    renderEditor(root, window.__SHELFMADE_CHAPTERS__)
+    return
+  }
+
+  fetchChapters(window.__SHELFMADE_BOOK_SLUG__).then((chapters) => renderEditor(root, chapters))
+}
+
+function renderEditor(root: Root, chapters: EditorChapter[]) {
   root.render(
     <Editor
-      chapters={window.__SHELFMADE_CHAPTERS__}
+      chapters={chapters}
       bookSlug={window.__SHELFMADE_BOOK_SLUG__}
       saveDebounceMs={window.__SHELFMADE_REMOUNT_DEBOUNCE_MS__}
     />,
   )
+}
+
+function fetchChapters(bookSlug: string): Promise<EditorChapter[]> {
+  return fetch(`/${bookSlug}-chapters`).then((response) => response.json())
 }
 
 // Debounces saves into one remount; timer lives on hot.data since module scope resets on reload

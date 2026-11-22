@@ -10,6 +10,8 @@ let server: ViteDevServer
 let baseURL: string
 
 // Per-worker port - chromium and firefox projects run in parallel
+// Playwright requires the fixtures arg be destructured even when unused
+// eslint-disable-next-line no-empty-pattern
 test.beforeAll(async ({}, testInfo) => {
   const port = 8199 + testInfo.workerIndex
   server = await startViteServer(ROOT, port)

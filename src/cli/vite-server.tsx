@@ -129,6 +129,32 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     )
   })
 
+  // Fresh chapter snapshot, for the editor pane to re-sync after an external file edit
+  server.middlewares.use((request, response, next) => {
+    const match = request.method === 'GET' ? /^\/([^/]+)-chapters$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    serveChapters(server, root, slug).then(
+      (json) => {
+        if (json === null) {
+          response.statusCode = 404
+          response.end('Not found')
+          return
+        }
+
+        response.setHeader('Content-Type', 'application/json')
+        response.setHeader('Cache-Control', 'no-store')
+        response.end(json)
+      },
+      (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
   // Scriptless shell for the frame that only displays already-paginated content
   server.middlewares.use((request, response, next) => {
     const match =
@@ -334,6 +360,20 @@ function readRequestBody(request: IncomingMessage): Promise<string> {
     request.on('end', () => resolveBody(Buffer.concat(chunks).toString('utf-8')))
     request.on('error', reject)
   })
+}
+
+// Same shape as __SHELFMADE_CHAPTERS_JSON__ in serveBookPage, re-read fresh from disk
+async function serveChapters(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+): Promise<string | null> {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) return null
+
+  return JSON.stringify(book.chapters.map(({ slug, title, content }) => ({ slug, title, content })))
 }
 
 async function serveBookPage(server: ViteDevServer, root: string, slug: string, url: string) {
