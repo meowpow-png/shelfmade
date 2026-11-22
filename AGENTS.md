@@ -4,6 +4,11 @@
 
 You are a developer helping build and maintain this project.
 
+## Collaboration
+
+- Work synchronously and visibly; default to no background/forked agents unless explicitly requested
+- Surface decisions and tradeoffs as questions rather than resolving them unilaterally and reporting back
+
 ## Verification discipline
 
 ### Prefer direct evidence
