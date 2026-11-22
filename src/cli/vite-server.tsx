@@ -8,7 +8,7 @@ import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { createServer, type Plugin, type ViteDevServer } from 'vite'
 
 import { resolveBooksViaVite } from '@/engine/books'
-import { renderPageSize, renderTopbar } from '@/engine/document'
+import { renderDocument, renderTopbar } from '@/engine/document'
 import { PAGED_POLYFILL, RUNTIME_DIR } from '@/engine/render'
 
 // src/ next to dist/ when built, or this package's own src/ in dev
@@ -102,6 +102,60 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     )
   })
 
+  // Body-only SSR, for re-paginating a cached frame without reloading it
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'GET' ? /^\/([^/]+)-preview-body$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    servePreviewBody(server, root, slug).then(
+      (html) => {
+        if (html === null) {
+          response.statusCode = 404
+          response.end('Not found')
+          return
+        }
+
+        response.setHeader('Content-Type', 'text/html')
+        response.setHeader('Cache-Control', 'no-store')
+        response.end(html)
+      },
+      (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  // Scriptless shell for the frame that only displays already-paginated content
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'GET' ? /^\/([^/]+)-display-frame$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    serveDisplayFrame(server, root, slug).then(
+      (html) => {
+        if (html === null) {
+          response.statusCode = 404
+          response.end('Not found')
+          return
+        }
+
+        response.setHeader('Content-Type', 'text/html')
+        response.setHeader('Cache-Control', 'no-store')
+        response.end(html)
+      },
+      (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
   server.middlewares.use((request, response, next) => {
     const match = request.method === 'GET' ? /^\/([^/]+)\.html$/.exec(request.url ?? '') : null
     const [, slug] = match ?? []
@@ -120,6 +174,34 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
         }
 
         response.setHeader('Content-Type', 'text/html')
+        response.end(html)
+      },
+      (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  // Flat path - renderDocument's relative hrefs only resolve one segment deep
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'GET' ? /^\/([^/]+)-preview-frame$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    servePreviewFrame(server, root, slug).then(
+      (html) => {
+        if (html === null) {
+          response.statusCode = 404
+          response.end('Not found')
+          return
+        }
+
+        response.setHeader('Content-Type', 'text/html')
+        // Guard against a stale cached response
+        response.setHeader('Cache-Control', 'no-store')
         response.end(html)
       },
       (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
@@ -258,21 +340,13 @@ async function serveBookPage(server: ViteDevServer, root: string, slug: string, 
 
   if (!book) return null
 
-  const { App } = book
   const { renderBookBody } = await server.ssrLoadModule(resolve(SRC_DIR, 'client/render-book.tsx'))
-  const body = renderBookBody(App)
-  const stylesheets = readdirSync(book.dir)
-    .filter((file) => file.endsWith('.css'))
-    .sort()
-    .map((file) => `<link rel="stylesheet" href="books/${slug}/${file}" />`)
-    .join('\n    ')
+  const body = renderBookBody()
   const template = readFileSync(resolve(SRC_DIR, 'client/book.html'), 'utf-8')
 
   const html = fillTemplate(template, {
     __SHELFMADE_LANG__: book.lang,
     __SHELFMADE_TITLE__: book.documentTitle,
-    __SHELFMADE_PAGE_SIZE__: renderPageSize(book.pageSize),
-    __SHELFMADE_STYLESHEETS__: stylesheets,
     __SHELFMADE_BOOK_ROOT__: body,
     __SHELFMADE_TOPBAR__: renderTopbar('Visual Editor'),
     // path is the save route's write target - server-side only, never sent to the browser
@@ -286,6 +360,65 @@ async function serveBookPage(server: ViteDevServer, root: string, slug: string, 
 
   // transformIndexHtml also injects Vite's HMR client, intercepted once remount logic lands
   return server.transformIndexHtml(url, html)
+}
+
+// Empty body - the client always fills it via repaginate()/servePreviewBody, never auto-pagination's output
+async function servePreviewFrame(server: ViteDevServer, root: string, slug: string) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) return null
+
+  const { documentTitle, lang, pageSize, dir } = book
+  const stylesheets = readdirSync(dir)
+    .filter((file) => file.endsWith('.css'))
+    .sort()
+    .map((file) => `books/${slug}/${file}`)
+
+  return renderDocument(
+    { title: documentTitle, lang, pageSize, stylesheets, autoPaginate: false },
+    '',
+  )
+}
+
+// Same SSR as servePreviewFrame, minus the document shell
+async function servePreviewBody(server: ViteDevServer, root: string, slug: string) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) return null
+
+  const { renderPreviewFrameBody } = await server.ssrLoadModule(
+    resolve(SRC_DIR, 'client/render-preview-frame.tsx'),
+  )
+  return renderPreviewFrameBody(book.App)
+}
+
+// Scriptless shell - this frame only displays pages already paginated by the compute frame.
+// Gets the dev-only zoom (preview-frame.css) since it's the one the user actually sees
+async function serveDisplayFrame(server: ViteDevServer, root: string, slug: string) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) return null
+
+  const { documentTitle, lang, pageSize, dir } = book
+  const stylesheets = readdirSync(dir)
+    .filter((file) => file.endsWith('.css'))
+    .sort()
+    .map((file) => `books/${slug}/${file}`)
+
+  return renderDocument(
+    {
+      title: documentTitle,
+      lang,
+      pageSize,
+      stylesheets,
+      screenStylesheets: ['shelfmade/preview-frame.css'],
+      includeScripts: false,
+    },
+    '',
+  )
 }
 
 async function serveIndexPage(server: ViteDevServer, root: string, url: string) {
