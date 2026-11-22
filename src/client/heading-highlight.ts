@@ -1,13 +1,20 @@
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 
+// line-height lives in heading-spacing.ts's
+// line decoration; a span can't win against its line's
+const headingFont = {
+  fontFamily: 'var(--font-heading)',
+  fontWeight: 600,
+}
+
 const headingStyles = [
-  { tag: tags.heading1, fontWeight: 700, fontSize: '1.6em' },
-  { tag: tags.heading2, fontWeight: 700, fontSize: '1.35em' },
-  { tag: tags.heading3, fontWeight: 700, fontSize: '1.15em' },
-  { tag: tags.heading4, fontWeight: 700, fontSize: '1.05em' },
-  { tag: tags.heading5, fontWeight: 700, fontSize: '1em' },
-  { tag: tags.heading6, fontWeight: 700, fontSize: '0.9em' },
+  { tag: tags.heading1, ...headingFont, fontSize: '26px' },
+  { tag: tags.heading2, ...headingFont, fontSize: '21px' },
+  { tag: tags.heading3, ...headingFont, fontSize: '18px' },
+  { tag: tags.heading4, ...headingFont, fontSize: '16px' },
+  { tag: tags.heading5, ...headingFont, fontSize: '15px' },
+  { tag: tags.heading6, ...headingFont, fontSize: '14px' },
 ] as const
 
 export const headingHighlight = syntaxHighlighting(HighlightStyle.define([...headingStyles]))
