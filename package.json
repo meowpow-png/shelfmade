@@ -1,6 +1,6 @@
 {
   "name": "shelfmade",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A CLI for turning MDX content and reusable components into print-ready books.",
   "license": "MIT",
   "author": {
