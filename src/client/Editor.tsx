@@ -4,7 +4,7 @@ import { EditorView } from '@codemirror/view'
 
 import { baseExtensions } from '@/client/editor-extensions'
 import { editorTheme } from '@/client/editor-theme'
-import { headingHighlight } from '@/client/heading-highlight'
+import { headingHighlight, headingStyles } from '@/client/heading-highlight'
 
 export interface EditorChapter {
   slug: string
@@ -71,6 +71,7 @@ export function Editor({ chapters: initialChapters, bookSlug, saveDebounceMs }: 
           <ChapterEditor
             key={chapter.slug}
             slug={chapter.slug}
+            title={chapter.title}
             initialValue={body}
             onChange={(value) => handleBodyChange(chapter.slug, value)}
           />
@@ -82,11 +83,22 @@ export function Editor({ chapters: initialChapters, bookSlug, saveDebounceMs }: 
 
 interface ChapterEditorProps {
   slug: string
+  title: string
   initialValue: string
   onChange: (value: string) => void
 }
 
-function ChapterEditor({ slug, initialValue, onChange }: ChapterEditorProps) {
+// Title lives in frontmatter, not a literal body line, so it's rendered separately from CM6
+function ChapterTitle({ title }: { title: string }) {
+  const { fontWeight, fontSize } = headingStyles[0]
+  return (
+    <div className="editor-chapter-title" style={{ fontWeight, fontSize }}>
+      # {title}
+    </div>
+  )
+}
+
+function ChapterEditor({ slug, title, initialValue, onChange }: ChapterEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   // Keeps onChange current without recreating the view
   const onChangeRef = useRef(onChange)
@@ -123,5 +135,10 @@ function ChapterEditor({ slug, initialValue, onChange }: ChapterEditorProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
-  return <div className="editor-chapter" ref={containerRef} />
+  return (
+    <div className="editor-chapter">
+      <ChapterTitle title={title} />
+      <div ref={containerRef} />
+    </div>
+  )
 }

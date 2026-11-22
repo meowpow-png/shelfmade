@@ -20,6 +20,9 @@ body {
   width: 50%;
   overflow-y: auto;
   background: var(--color-background);
+
+  /* Pinned base: a book's own stylesheet can set `body { font-size }` and leak into here */
+  font-size: 16px;
 }
 
 .editor {
@@ -38,6 +41,13 @@ body {
 
 .editor-chapter:first-child {
   border-top: none;
+}
+
+.editor-chapter-title {
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  margin-bottom: 16px;
 }
 
 .preview {
