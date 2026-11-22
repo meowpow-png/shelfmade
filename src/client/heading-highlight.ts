@@ -1,8 +1,7 @@
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 
-// Exported so non-CM6 heading-styled text can reuse these values
-export const headingStyles = [
+const headingStyles = [
   { tag: tags.heading1, fontWeight: 700, fontSize: '1.6em' },
   { tag: tags.heading2, fontWeight: 700, fontSize: '1.35em' },
   { tag: tags.heading3, fontWeight: 700, fontSize: '1.15em' },
