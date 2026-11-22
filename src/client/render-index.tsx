@@ -1,8 +1,8 @@
-import { renderToStaticMarkup } from 'react-dom/server'
+import { renderToString } from 'react-dom/server'
 
 import { BooksPage, type BookSummary } from '@/client/BooksPage'
 
 // Loaded via ssrLoadModule only; BooksPage transitively uses the Vite-only ?raw SVG import
 export function renderIndexBody(books: BookSummary[]) {
-  return renderToStaticMarkup(<BooksPage books={books} />)
+  return renderToString(<BooksPage books={books} />)
 }
