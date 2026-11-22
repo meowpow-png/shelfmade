@@ -11,7 +11,7 @@ export const editorTheme = EditorView.theme({
     outline: 'none',
   },
   '.cm-content': {
-    padding: 0,
+    padding: '0 32px',
     fontFamily: 'var(--font-sans)',
     lineHeight: '1.7',
   },
