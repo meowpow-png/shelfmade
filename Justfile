@@ -23,6 +23,10 @@ playwright *args:
 test:
     @just playwright npm test
 
+# Open example book in web editor, with live preview
+example:
+    @npm run example
+
 # Print example book project to PDF
 example-pdf:
     @npm run example:install
