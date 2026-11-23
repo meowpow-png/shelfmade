@@ -3,16 +3,23 @@ import { expect, test, type Page } from '@playwright/test'
 import { type ViteDevServer } from 'vite'
 
 import { startViteServer } from '../src/cli/vite-server'
-import { chapterPath, createBookSandbox, type BookSandbox } from './book-sandbox'
+import { acquireLock, chapterPath, createBookSandbox, type BookSandbox } from './book-sandbox'
+
+// Avoids contention between concurrent Vite servers/pagedjs runs across workers
+test.describe.configure({ mode: 'serial' })
 
 let sandbox: BookSandbox
 let server: ViteDevServer
 let baseURL: string
+let releaseLock: () => void
 
 // Per-worker port, since chromium/firefox projects run in parallel
 // Playwright requires the fixtures arg be destructured even when unused
 // eslint-disable-next-line no-empty-pattern
 test.beforeAll(async ({}, testInfo) => {
+  // serial mode alone doesn't stop chromium/firefox workers overlapping - this mutex does
+  testInfo.setTimeout(180_000)
+  releaseLock = await acquireLock('external-edit-conflict')
   sandbox = createBookSandbox()
   const port = 8299 + testInfo.workerIndex
   server = await startViteServer(sandbox.root, port)
@@ -20,8 +27,12 @@ test.beforeAll(async ({}, testInfo) => {
 })
 
 test.afterAll(async () => {
-  await server.close()
-  sandbox.cleanup()
+  try {
+    await server?.close()
+  } finally {
+    sandbox?.cleanup()
+    releaseLock?.()
+  }
 })
 
 // Only the selected chapter is ever mounted, so this matches whichever one is shown
