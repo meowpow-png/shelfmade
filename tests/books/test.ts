@@ -3,7 +3,12 @@ import { expect, test as base, type APIResponse } from '@playwright/test'
 
 import { startViteServer } from '../../src/cli/vite-server'
 import { resolveBooks, withOrder } from '../../src/engine/books'
-import { chapterPath, createBookSandbox, type BookSandbox } from '../book-sandbox'
+import {
+  acquireBookIntegrationLock,
+  chapterPath,
+  createBookSandbox,
+  type BookSandbox,
+} from '../book-sandbox'
 
 const FIELD_NOTES_FILES = ['chapter-1.mdx', 'chapter-2.mdx', 'chapter-3.mdx'] as const
 
@@ -65,23 +70,29 @@ export const test = base.extend<BookFixtures>({
     }
   },
   bookOrderServer: async ({ fieldNotes, request }, provide, testInfo) => {
+    const releaseLock = await acquireBookIntegrationLock()
     const port = 8899 + testInfo.workerIndex
-    const server = await startViteServer(fieldNotes.sandbox.root, port)
-    const baseURL = `http://127.0.0.1:${port}`
-
-    // Warm eager backfill so assertions measure only the reorder's writes.
-    await request.get(`${baseURL}/field-notes-chapters`)
 
     try {
-      await provide({
-        baseURL,
-        reorder: (chapterSlug, order) =>
-          request.put(`${baseURL}/books/field-notes/chapters/${chapterSlug}/order`, {
-            data: String(order),
-          }),
-      })
+      const server = await startViteServer(fieldNotes.sandbox.root, port)
+      const baseURL = `http://127.0.0.1:${port}`
+
+      // Warm eager backfill so assertions measure only the reorder's writes.
+      await request.get(`${baseURL}/field-notes-chapters`)
+
+      try {
+        await provide({
+          baseURL,
+          reorder: (chapterSlug, order) =>
+            request.put(`${baseURL}/books/field-notes/chapters/${chapterSlug}/order`, {
+              data: String(order),
+            }),
+        })
+      } finally {
+        await server.close()
+      }
     } finally {
-      await server.close()
+      releaseLock()
     }
   },
 })

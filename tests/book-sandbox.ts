@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path'
 
 const SAMPLE_BOOK = resolve(__dirname, '../examples/sample-book')
 const PACKAGE_ROOT = resolve(__dirname, '..')
+const BOOK_INTEGRATION_LOCK = 'book-integration'
 
 // Must live under the repo root because react/react-dom/etc.
 // are hoisted at /workspace/node_modules, and Node's resolution
@@ -63,4 +64,8 @@ export async function acquireLock(name: string, timeoutMs = 120_000): Promise<()
       await new Promise((r) => setTimeout(r, 100))
     }
   }
+}
+
+export function acquireBookIntegrationLock(): Promise<() => void> {
+  return acquireLock(BOOK_INTEGRATION_LOCK)
 }

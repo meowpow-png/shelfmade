@@ -2,7 +2,7 @@ import { expect, test as base, type Locator } from '@playwright/test'
 import { type ViteDevServer } from 'vite'
 
 import { startViteServer } from '../../src/cli/vite-server'
-import { acquireLock, createBookSandbox, type BookSandbox } from '../book-sandbox'
+import { acquireBookIntegrationLock, createBookSandbox, type BookSandbox } from '../book-sandbox'
 
 interface EditorServerOptions {
   portBase: number
@@ -36,8 +36,7 @@ export const test = base.extend<EditorFixtures, EditorWorkerFixtures>({
   editorServerOptions: [{ portBase: 8199 }, { option: true, scope: 'worker' }],
   editorServer: [
     async ({ editorServerOptions }, provide, workerInfo) => {
-      // Serializes Vite and Paged.js work across browser workers to prevent contention flakes.
-      const releaseLock = await acquireLock('editor-integration')
+      const releaseLock = await acquireBookIntegrationLock()
       const sandbox = createBookSandbox()
 
       try {
