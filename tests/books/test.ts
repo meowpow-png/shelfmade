@@ -33,7 +33,8 @@ function clearOrder(sandbox: BookSandbox, file: string) {
 }
 
 export const test = base.extend<BookFixtures>({
-  fieldNotes: async ({}, use) => {
+  // eslint-disable-next-line no-empty-pattern -- Playwright requires object destructuring.
+  fieldNotes: async ({}, provide) => {
     const sandbox = createBookSandbox()
 
     // The copied example content is not guaranteed to be order-less or filename-ordered.
@@ -43,7 +44,7 @@ export const test = base.extend<BookFixtures>({
     const source = (file: string) => readFileSync(pathOf(file), 'utf-8')
 
     try {
-      await use({
+      await provide({
         bytes: (file) => readFileSync(pathOf(file)),
         files: FIELD_NOTES_FILES,
         load: (backfillOrder = true) => {
@@ -63,7 +64,7 @@ export const test = base.extend<BookFixtures>({
       sandbox.cleanup()
     }
   },
-  bookOrderServer: async ({ fieldNotes, request }, use, testInfo) => {
+  bookOrderServer: async ({ fieldNotes, request }, provide, testInfo) => {
     const port = 8899 + testInfo.workerIndex
     const server = await startViteServer(fieldNotes.sandbox.root, port)
     const baseURL = `http://127.0.0.1:${port}`
@@ -72,7 +73,7 @@ export const test = base.extend<BookFixtures>({
     await request.get(`${baseURL}/field-notes-chapters`)
 
     try {
-      await use({
+      await provide({
         baseURL,
         reorder: (chapterSlug, order) =>
           request.put(`${baseURL}/books/field-notes/chapters/${chapterSlug}/order`, {

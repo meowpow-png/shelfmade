@@ -10,7 +10,6 @@ test.use({ editorServerOptions: { portBase: 8299 } })
 test('an external edit to a clean chapter shows the banner and leaves the pane untouched', async ({
   chapter,
   openBook,
-  page,
   sandbox,
 }) => {
   await openBook('field-notes')

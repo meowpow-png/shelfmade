@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { expect, test as base, type Locator } from '@playwright/test'
 
-export type OpenFixture = (name: string) => Promise<void>
+type OpenFixture = (name: string) => Promise<void>
 export type PaginateFixture = (name: string) => Promise<Locator>
 
 interface PaginationFixtures {
@@ -10,14 +10,14 @@ interface PaginationFixtures {
 }
 
 export const test = base.extend<PaginationFixtures>({
-  openFixture: async ({ page }, use) => {
-    await use(async (name) => {
+  openFixture: async ({ page }, provide) => {
+    await provide(async (name) => {
       const fixture = path.join(__dirname, 'fixtures', name)
       await page.goto(`file://${fixture}`)
     })
   },
-  paginateFixture: async ({ page, openFixture }, use) => {
-    await use(async (name) => {
+  paginateFixture: async ({ page, openFixture }, provide) => {
+    await provide(async (name) => {
       await openFixture(name)
       // Each paged fixture sets this from PagedConfig.after when layout is complete.
       await page.waitForFunction(() => window.PAGED_READY === true)

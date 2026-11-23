@@ -35,7 +35,7 @@ interface EditorWorkerFixtures {
 export const test = base.extend<EditorFixtures, EditorWorkerFixtures>({
   editorServerOptions: [{ portBase: 8199 }, { option: true, scope: 'worker' }],
   editorServer: [
-    async ({ editorServerOptions }, use, workerInfo) => {
+    async ({ editorServerOptions }, provide, workerInfo) => {
       // Serializes Vite and Paged.js work across browser workers to prevent contention flakes.
       const releaseLock = await acquireLock('editor-integration')
       const sandbox = createBookSandbox()
@@ -47,7 +47,7 @@ export const test = base.extend<EditorFixtures, EditorWorkerFixtures>({
         const server = await startViteServer(sandbox.root, port)
 
         try {
-          await use({ baseURL: `http://127.0.0.1:${port}`, sandbox, server })
+          await provide({ baseURL: `http://127.0.0.1:${port}`, sandbox, server })
         } finally {
           await server.close()
         }
@@ -58,26 +58,32 @@ export const test = base.extend<EditorFixtures, EditorWorkerFixtures>({
     },
     { scope: 'worker', timeout: 180_000 },
   ],
-  editorBaseURL: [async ({ editorServer }, use) => use(editorServer.baseURL), { scope: 'worker' }],
-  sandbox: [async ({ editorServer }, use) => use(editorServer.sandbox), { scope: 'worker' }],
-  openBook: async ({ editorBaseURL, page }, use) => {
-    await use(async (slug) => {
+  editorBaseURL: [
+    async ({ editorServer }, provide) => provide(editorServer.baseURL),
+    { scope: 'worker' },
+  ],
+  sandbox: [
+    async ({ editorServer }, provide) => provide(editorServer.sandbox),
+    { scope: 'worker' },
+  ],
+  openBook: async ({ editorBaseURL, page }, provide) => {
+    await provide(async (slug) => {
       await page.goto(`${editorBaseURL}/${slug}.html`)
       await page.waitForFunction(
         () => document.getElementById('book-root')?.style.visibility === '',
       )
     })
   },
-  chapter: async ({ page }, use) => {
+  chapter: async ({ page }, provide) => {
     // Only the selected chapter is mounted, so its title identifies the current wrapper.
-    await use((title) =>
+    await provide((title) =>
       page
         .locator('.editor-chapter-wrapper')
         .filter({ has: page.locator('.editor-chapter-title', { hasText: title }) }),
     )
   },
-  selectChapter: async ({ chapter, page }, use) => {
-    await use(async (title) => {
+  selectChapter: async ({ chapter, page }, provide) => {
+    await provide(async (title) => {
       await page.getByRole('button', { name: title, exact: true }).click()
       await expect(chapter(title)).toBeVisible()
     })
