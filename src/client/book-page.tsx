@@ -1,5 +1,6 @@
 import { createRoot, type Root } from 'react-dom/client'
 
+import { ChapterNav } from '@/client/ChapterNav'
 import { Editor, type EditorChapter } from '@/client/Editor'
 // Side-effect only - keeps chapter edits in Vite's module graph so HMR fires, see that file
 import '@/client/resolve-book'
@@ -30,9 +31,10 @@ if (container) {
 }
 
 const editorContainer = document.getElementById('editor-root')
+const chapterNavContainer = document.getElementById('chapter-nav-root')
 
 if (editorContainer) {
-  mountEditor(editorContainer)
+  mountEditor(editorContainer, chapterNavContainer)
 }
 
 // Self-accepting avoids Vite's full-page-reload fallback on chapter/config changes
@@ -40,22 +42,29 @@ if (import.meta.hot) {
   import.meta.hot.accept()
 }
 
-// Root is cached on hot.data - re-running createRoot on the same container on every remount warns
-function mountEditor(container: HTMLElement) {
+// Cached on hot.data to avoid recreating roots on every remount.
+function mountEditor(container: HTMLElement, chapterNavContainer: HTMLElement | null) {
   const hot = import.meta.hot
   const root = hot ? (hot.data.editorRoot ??= createRoot(container)) : createRoot(container)
+  const chapterNavRoot = chapterNavContainer
+    ? hot
+      ? (hot.data.chapterNavRoot ??= createRoot(chapterNavContainer))
+      : createRoot(chapterNavContainer)
+    : undefined
 
   // window.__SHELFMADE_CHAPTERS__ is only fresh on this first call; later remounts need refetch
   if (!hot || !hot.data.editorMounted) {
     if (hot) hot.data.editorMounted = true
-    renderEditor(root, window.__SHELFMADE_CHAPTERS__)
+    renderEditor(root, chapterNavRoot, window.__SHELFMADE_CHAPTERS__)
     return
   }
 
-  fetchChapters(window.__SHELFMADE_BOOK_SLUG__).then((chapters) => renderEditor(root, chapters))
+  fetchChapters(window.__SHELFMADE_BOOK_SLUG__).then((chapters) =>
+    renderEditor(root, chapterNavRoot, chapters),
+  )
 }
 
-function renderEditor(root: Root, chapters: EditorChapter[]) {
+function renderEditor(root: Root, chapterNavRoot: Root | undefined, chapters: EditorChapter[]) {
   root.render(
     <Editor
       chapters={chapters}
@@ -63,6 +72,7 @@ function renderEditor(root: Root, chapters: EditorChapter[]) {
       saveDebounceMs={window.__SHELFMADE_REMOUNT_DEBOUNCE_MS__}
     />,
   )
+  chapterNavRoot?.render(<ChapterNav chapters={chapters} />)
 }
 
 function fetchChapters(bookSlug: string): Promise<EditorChapter[]> {

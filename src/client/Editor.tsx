@@ -5,6 +5,7 @@ import { EditorView } from '@codemirror/view'
 import { baseExtensions } from '@/client/editor-extensions'
 import { editorTheme } from '@/client/editor-theme'
 import { headingHighlight } from '@/client/heading-highlight'
+import { getSelectedChapterStore } from '@/client/selected-chapter-store'
 
 export interface EditorChapter {
   slug: string
@@ -18,8 +19,7 @@ interface EditorProps {
   saveDebounceMs: number
 }
 
-// Content includes frontmatter;
-// editor shows/edits body only, frontmatter re-attached on save.
+// Content includes frontmatter; editor edits body only, re-attaching it on save
 const FRONTMATTER_PATTERN = /^---\n[\s\S]*?\n---\n*/
 
 function splitFrontmatter(source: string): { frontmatter: string; body: string } {
@@ -40,16 +40,17 @@ function getEditorViewCache(): Map<string, EditorView> {
 
 // Bridges state into React: useRef can't be read at render, useState can't be set in an effect.
 function createConflictStore() {
-  let conflicts: Record<string, string> = {}
+  // The selected chapter's conflicting disk content; undefined if none
+  let conflict: string | undefined
   const listeners = new Set<() => void>()
   return {
-    getSnapshot: () => conflicts,
+    getSnapshot: () => conflict,
     subscribe(listener: () => void) {
       listeners.add(listener)
       return () => listeners.delete(listener)
     },
-    set(next: Record<string, string>) {
-      conflicts = next
+    set(next: string | undefined) {
+      conflict = next
       listeners.forEach((listener) => listener())
     },
   }
@@ -63,95 +64,100 @@ function getConflictStore(): ReturnType<typeof createConflictStore> {
 }
 
 export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
-  // Captured once per chapter - re-splitting on every save let body blank lines leak into it
-  const frontmatterBySlug = useRef(
-    Object.fromEntries(
-      chapters.map((chapter) => [chapter.slug, splitFrontmatter(chapter.content).frontmatter]),
-    ),
-  ).current
-  // One timer per chapter, so editing one doesn't reset another's pending save
-  const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
-  // Content last known to match disk; used to tell a safe external sync from a real conflict
-  const lastSyncedBySlug = useRef(
-    Object.fromEntries(chapters.map((chapter) => [chapter.slug, chapter.content])),
-  ).current
+  const selectedChapterStore = getSelectedChapterStore()
+  const selectedSlug = useSyncExternalStore(
+    selectedChapterStore.subscribe,
+    selectedChapterStore.getSnapshot,
+  )
+  const selectedChapter = chapters.find((chapter) => chapter.slug === selectedSlug) ?? chapters[0]
+
+  // Only the selected chapter is ever mounted, so only it can have a pending save or conflict
+  const activeChapterRef = useRef<
+    { slug: string; frontmatter: string; lastSynced: string } | undefined
+  >(undefined)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const conflictStore = getConflictStore()
-  const conflictsBySlug = useSyncExternalStore(conflictStore.subscribe, conflictStore.getSnapshot)
-
-  // Reconciles disk content against each pane on every fresh fetch from book-page.tsx
-  useEffect(() => {
-    const nextConflicts = { ...conflictStore.getSnapshot() }
-    let conflictsChanged = false
-
-    for (const chapter of chapters) {
-      const baseline = lastSyncedBySlug[chapter.slug]
-      if (chapter.content === baseline) continue
-      if (nextConflicts[chapter.slug] === chapter.content) continue
-
-      nextConflicts[chapter.slug] = chapter.content
-      conflictsChanged = true
-    }
-
-    if (conflictsChanged) conflictStore.set(nextConflicts)
-    // lastSyncedBySlug/conflictStore are stable refs, not render inputs
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapters])
+  const conflictContent = useSyncExternalStore(conflictStore.subscribe, conflictStore.getSnapshot)
 
   function saveChapterNow(chapterSlug: string, content: string) {
     return fetch(`/books/${bookSlug}/chapters/${chapterSlug}`, { method: 'PUT', body: content })
       .then(() => {
-        lastSyncedBySlug[chapterSlug] = content
+        // Guards against a save landing after the user has already switched chapters
+        if (activeChapterRef.current?.slug === chapterSlug) {
+          activeChapterRef.current.lastSynced = content
+        }
       })
       .catch((error: unknown) => console.error(`Failed to save chapter "${chapterSlug}":`, error))
   }
 
-  function handleBodyChange(chapterSlug: string, body: string) {
-    const content = frontmatterBySlug[chapterSlug] + body
+  // Flushes the outgoing chapter's pending save before adopting the new baseline
+  useEffect(() => {
+    if (!selectedChapter) return
+    const previous = activeChapterRef.current
 
-    clearTimeout(saveTimers.current[chapterSlug])
-    saveTimers.current[chapterSlug] = setTimeout(
-      () => saveChapterNow(chapterSlug, content),
-      saveDebounceMs,
-    )
+    if (previous?.slug === selectedChapter.slug) {
+      // Same chapter with new content means an external edit diverged from baseline
+      if (selectedChapter.content === previous.lastSynced) return
+      if (conflictStore.getSnapshot() === selectedChapter.content) return
+      conflictStore.set(selectedChapter.content)
+      return
+    }
+
+    if (previous && saveTimerRef.current !== undefined) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = undefined
+      const view = getEditorViewCache().get(previous.slug)
+      if (view) saveChapterNow(previous.slug, previous.frontmatter + view.state.doc.toString())
+    }
+
+    activeChapterRef.current = {
+      slug: selectedChapter.slug,
+      frontmatter: splitFrontmatter(selectedChapter.content).frontmatter,
+      lastSynced: selectedChapter.content,
+    }
+    conflictStore.set(undefined)
+    // activeChapterRef/saveTimerRef/conflictStore/saveChapterNow are stable, not render inputs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChapter])
+
+  function handleBodyChange(body: string) {
+    const active = activeChapterRef.current
+    if (!active) return
+    const content = active.frontmatter + body
+
+    clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => saveChapterNow(active.slug, content), saveDebounceMs)
   }
 
-  function dismissConflict(chapterSlug: string) {
-    const remaining = { ...conflictStore.getSnapshot() }
-    delete remaining[chapterSlug]
-    conflictStore.set(remaining)
-  }
+  function loadExternalChanges() {
+    const active = activeChapterRef.current
+    const content = conflictStore.getSnapshot()
+    if (!active || content === undefined) return
 
-  function loadExternalChanges(chapterSlug: string) {
-    const view = getEditorViewCache().get(chapterSlug)
-    const content = conflictStore.getSnapshot()[chapterSlug]
-    if (!view || content === undefined) return
+    const view = getEditorViewCache().get(active.slug)
+    if (!view) return
 
     const { body } = splitFrontmatter(content)
     // Also triggers a harmless no-op resave via onChange
     view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: body } })
-    lastSyncedBySlug[chapterSlug] = content
-    dismissConflict(chapterSlug)
+    active.lastSynced = content
+    conflictStore.set(undefined)
   }
 
   return (
     <div className="editor">
-      {chapters.map((chapter) => {
-        const { body } = splitFrontmatter(chapter.content)
-        return (
-          <div key={chapter.slug} className="editor-chapter-wrapper">
-            {chapter.slug in conflictsBySlug && (
-              <ConflictBanner onLoadExternal={() => loadExternalChanges(chapter.slug)} />
-            )}
-            <ChapterEditor
-              slug={chapter.slug}
-              title={chapter.title}
-              initialValue={body}
-              onChange={(value) => handleBodyChange(chapter.slug, value)}
-            />
-          </div>
-        )
-      })}
+      {selectedChapter && (
+        <div className="editor-chapter-wrapper">
+          {conflictContent !== undefined && <ConflictBanner onLoadExternal={loadExternalChanges} />}
+          <ChapterEditor
+            slug={selectedChapter.slug}
+            title={selectedChapter.title}
+            initialValue={splitFrontmatter(selectedChapter.content).body}
+            onChange={handleBodyChange}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -193,29 +199,35 @@ function ChapterEditor({ slug, title, initialValue, onChange }: ChapterEditorPro
   })
 
   useEffect(() => {
+    const container = containerRef.current!
+    // Detach the outgoing chapter's dom without destroying its cached EditorView
+    while (container.firstChild) container.removeChild(container.firstChild)
+
     const views = getEditorViewCache()
     const cached = views.get(slug)
 
     if (cached) {
-      containerRef.current!.appendChild(cached.dom)
-      return
+      container.appendChild(cached.dom)
+    } else {
+      const view = new EditorView({
+        state: EditorState.create({
+          doc: initialValue,
+          extensions: [
+            baseExtensions,
+            editorTheme,
+            headingHighlight,
+            EditorView.updateListener.of((update) => {
+              if (update.docChanged) onChangeRef.current(update.state.doc.toString())
+            }),
+          ],
+        }),
+        parent: container,
+      })
+      views.set(slug, view)
     }
 
-    const view = new EditorView({
-      state: EditorState.create({
-        doc: initialValue,
-        extensions: [
-          baseExtensions,
-          editorTheme,
-          headingHighlight,
-          EditorView.updateListener.of((update) => {
-            if (update.docChanged) onChangeRef.current(update.state.doc.toString())
-          }),
-        ],
-      }),
-      parent: containerRef.current!,
-    })
-    views.set(slug, view)
+    // editor-theme.ts disables .cm-scroller's own scrolling, so #editor-root scrolls instead
+    document.getElementById('editor-root')?.scrollTo(0, 0)
 
     // View persists via cache; initialValue applies once, on first mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
