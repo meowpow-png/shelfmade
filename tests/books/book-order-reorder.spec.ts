@@ -2,8 +2,8 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { type ViteDevServer } from 'vite'
 
-import { startViteServer } from '../src/cli/vite-server'
-import { chapterPath, createBookSandbox, type BookSandbox } from './book-sandbox'
+import { startViteServer } from '../../src/cli/vite-server'
+import { chapterPath, createBookSandbox, type BookSandbox } from '../book-sandbox'
 
 async function setupServer(request: APIRequestContext) {
   const sandbox = createBookSandbox()

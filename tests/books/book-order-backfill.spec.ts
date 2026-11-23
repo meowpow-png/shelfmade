@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
 
-import { resolveBooks, withOrder } from '../src/engine/books'
-import { chapterPath, createBookSandbox, type BookSandbox } from './book-sandbox'
+import { resolveBooks, withOrder } from '../../src/engine/books'
+import { chapterPath, createBookSandbox, type BookSandbox } from '../book-sandbox'
 
 const FIELD_NOTES_FILES = ['chapter-1.mdx', 'chapter-2.mdx', 'chapter-3.mdx']
 

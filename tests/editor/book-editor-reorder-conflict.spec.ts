@@ -2,8 +2,8 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 import { type ViteDevServer } from 'vite'
 
-import { startViteServer } from '../src/cli/vite-server'
-import { acquireLock, chapterPath, createBookSandbox, type BookSandbox } from './book-sandbox'
+import { startViteServer } from '../../src/cli/vite-server'
+import { acquireLock, chapterPath, createBookSandbox, type BookSandbox } from '../book-sandbox'
 
 // Avoids contention between concurrent Vite servers/pagedjs runs across workers
 test.describe.configure({ mode: 'serial' })

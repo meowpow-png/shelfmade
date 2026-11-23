@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MinWidowLines no-op fixture</title>
+    <link rel="stylesheet" href="min-widow-lines-no-op.css" />
+    <script>
+      window.PagedConfig = {
+        after: () => {
+          window.PAGED_READY = true
+        },
+      }
+    </script>
+    <script src="../../../node_modules/pagedjs/dist/paged.polyfill.min.js"></script>
+    <script src="../../../src/runtime/pagination/break-token.js"></script>
+    <script src="../../../src/runtime/pagination/measurement.js"></script>
+    <script src="../../../src/runtime/pagination/rendered-elements.js"></script>
+    <script src="../../../src/runtime/pagination/keep-heading-with-paragraph.js"></script>
+    <script src="../../../src/runtime/pagination/min-widow-lines.js"></script>
+    <script src="../../../src/runtime/pagination/min-orphan-lines.js"></script>
+    <script src="../../../src/runtime/pagination/break-token-dispatch.js"></script>
+    <script src="../../../src/runtime/pagination/pagination-rules.js"></script>
+  </head>
+  <body>
+    <p>Line 1<br />Line 2<br />Line 3<br />Line 4<br />Line 5<br />Line 6</p>
+  </body>
+</html>

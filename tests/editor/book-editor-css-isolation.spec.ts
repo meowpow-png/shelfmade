@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
 import { type ViteDevServer } from 'vite'
 
-import { startViteServer } from '../src/cli/vite-server'
-import { createBookSandbox, type BookSandbox } from './book-sandbox'
+import { startViteServer } from '../../src/cli/vite-server'
+import { createBookSandbox, type BookSandbox } from '../book-sandbox'
 
 let sandbox: BookSandbox
 let server: ViteDevServer
