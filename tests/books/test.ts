@@ -69,32 +69,35 @@ export const test = base.extend<BookFixtures>({
       sandbox.cleanup()
     }
   },
-  bookOrderServer: async ({ fieldNotes, request }, provide, testInfo) => {
-    const releaseLock = await acquireBookIntegrationLock()
-    const port = 8899 + testInfo.workerIndex
-
-    try {
-      const server = await startViteServer(fieldNotes.sandbox.root, port)
-      const baseURL = `http://127.0.0.1:${port}`
-
-      // Warm eager backfill so assertions measure only the reorder's writes.
-      await request.get(`${baseURL}/field-notes-chapters`)
+  bookOrderServer: [
+    async ({ fieldNotes, request }, provide, testInfo) => {
+      const releaseLock = await acquireBookIntegrationLock()
+      const port = 8899 + testInfo.workerIndex
 
       try {
-        await provide({
-          baseURL,
-          reorder: (chapterSlug, order) =>
-            request.put(`${baseURL}/books/field-notes/chapters/${chapterSlug}/order`, {
-              data: String(order),
-            }),
-        })
+        const server = await startViteServer(fieldNotes.sandbox.root, port)
+        const baseURL = `http://127.0.0.1:${port}`
+
+        // Warm eager backfill so assertions measure only the reorder's writes.
+        await request.get(`${baseURL}/field-notes-chapters`)
+
+        try {
+          await provide({
+            baseURL,
+            reorder: (chapterSlug, order) =>
+              request.put(`${baseURL}/books/field-notes/chapters/${chapterSlug}/order`, {
+                data: String(order),
+              }),
+          })
+        } finally {
+          await server.close()
+        }
       } finally {
-        await server.close()
+        releaseLock()
       }
-    } finally {
-      releaseLock()
-    }
-  },
+    },
+    { timeout: 180_000 },
+  ],
 })
 
 export { expect }
