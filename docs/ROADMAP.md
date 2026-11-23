@@ -48,6 +48,7 @@ A two-pane app replaces the terminal workflow: write content on one side and wat
 - [x] Open a book into a two-pane editor: content on one side, a live paginated preview on the other
 - [x] Edit chapter content and have it save automatically, with the preview staying in sync
 - [ ] Switch between chapters from a collapsible sidebar, instead of scrolling through all of them at once
+- [x] Add a new chapter from the editor, instead of creating the file by hand
 - [ ] See a clear saved/unsaved status while editing
 - [ ] Recover gracefully when a save fails
 
