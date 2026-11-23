@@ -504,6 +504,9 @@ async function createChapter(
   response.end(JSON.stringify(chapter))
 }
 
+// Remembers indices used per content dir so a deleted chapter's path is never reused mid-process
+const chapterIndexHighWaterMarks = new Map<string, number>()
+
 // Only avoids colliding with other chapter-N files - unrelated to chapters named otherwise
 function nextChapterIndex(contentDir: string): number {
   const indices = readdirSync(contentDir)
@@ -511,7 +514,10 @@ function nextChapterIndex(contentDir: string): number {
     .filter((digits): digits is string => digits !== undefined)
     .map(Number)
 
-  return indices.length > 0 ? Math.max(...indices) + 1 : 1
+  const diskMax = indices.length > 0 ? Math.max(...indices) : 0
+  const next = Math.max(diskMax, chapterIndexHighWaterMarks.get(contentDir) ?? 0) + 1
+  chapterIndexHighWaterMarks.set(contentDir, next)
+  return next
 }
 
 function readRequestBody(request: IncomingMessage): Promise<string> {

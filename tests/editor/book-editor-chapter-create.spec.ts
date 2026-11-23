@@ -118,6 +118,29 @@ test('rapid double-click on + only creates one chapter', async ({ openBook, page
   expect(created).toHaveLength(1)
 })
 
+test('a deliberate click on + while renaming does not create a duplicate chapter', async ({
+  openBook,
+  page,
+  sandbox,
+}) => {
+  await openBook('field-notes')
+  const before = chapterFiles(sandbox)
+
+  let createRequestCount = 0
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().endsWith('/chapters')) createRequestCount++
+  })
+
+  await createChapter(page, sandbox)
+  await page.waitForTimeout(500)
+  // force: true skips Playwright's actionability wait, since the button is aria-disabled
+  await page.locator('.chapter-nav-add').click({ force: true })
+
+  expect(createRequestCount).toBe(1)
+  const created = [...chapterFiles(sandbox)].filter((file) => !before.has(file))
+  expect(created).toHaveLength(1)
+})
+
 test('the optimistic row appears before the real list loads and never duplicates once it does', async ({
   openBook,
   page,

@@ -18,12 +18,11 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
   const [creating, setCreating] = useState(false)
   const [renamingSlug, setRenamingSlug] = useState<string>()
   const [pendingChapter, setPendingChapter] = useState<NavChapter>()
+  // Chapters as of creation; the placeholder stops trusting itself on the next update, matched or not
+  const [pendingBaseChapters, setPendingBaseChapters] = useState(chapters)
 
-  // Placeholder drops out on its own once chapters (via file-watch HMR) catches up to it
   const displayChapters: NavChapter[] =
-    pendingChapter && !chapters.some((chapter) => chapter.slug === pendingChapter.slug)
-      ? [...chapters, pendingChapter]
-      : chapters
+    pendingChapter && chapters === pendingBaseChapters ? [...chapters, pendingChapter] : chapters
   const selectedSlug = storedSlug ?? displayChapters[0]?.slug
 
   // targetIndex is the drop target's current index, before the dragged chapter is removed
@@ -42,6 +41,7 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
     fetch(`/books/${bookSlug}/chapters`, { method: 'POST' })
       .then((response) => response.json() as Promise<NavChapter>)
       .then((chapter) => {
+        setPendingBaseChapters(chapters)
         // Deferred to commitRename/cancelRename to avoid stealing focus from the rename input
         setRenamingSlug(chapter.slug)
         setPendingChapter(chapter)

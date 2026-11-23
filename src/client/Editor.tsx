@@ -71,9 +71,12 @@ export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
   )
   const selectedChapter = chapters.find((chapter) => chapter.slug === selectedSlug) ?? chapters[0]
 
-  // Pins a default selection once, so a later reorder can't silently switch the open chapter
+  // Pins a default selection and recovers it if the selected chapter stops existing
   useEffect(() => {
-    if (selectedSlug === undefined && chapters[0]) selectedChapterStore.set(chapters[0].slug)
+    const fallback = chapters[0]
+    if (fallback && !chapters.some((chapter) => chapter.slug === selectedSlug)) {
+      selectedChapterStore.set(fallback.slug)
+    }
     // selectedChapterStore is stable, not a render input
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapters, selectedSlug])
