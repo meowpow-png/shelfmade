@@ -176,6 +176,7 @@ body {
 
 .chapter-nav-item {
   width: 100%;
+  box-sizing: border-box;
   padding: 10px 12px;
   border: none;
   border-radius: 8px;
@@ -200,4 +201,10 @@ body {
 
 .chapter-nav-dragging {
   opacity: 0.5;
+}
+
+.chapter-nav-rename {
+  background: var(--color-surface);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-info);
 }

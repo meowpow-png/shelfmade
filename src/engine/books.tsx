@@ -106,6 +106,20 @@ export function withOrder(source: string, order: number): string {
   return `---\n${nextInner}\n---\n\n${source.slice(match[0].length)}`
 }
 
+// Quoted/escaped since a user-typed title, unlike order's number, can contain YAML-breaking characters
+export function withTitle(source: string, title: string): string {
+  const value = `"${title.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+  const match = source.match(FRONTMATTER_PATTERN)
+  if (!match) return `---\ntitle: ${value}\n---\n\n${source}`
+
+  const inner = match[1] ?? ''
+  const nextInner = /^title:/m.test(inner)
+    ? inner.replace(/^title:.*$/m, `title: ${value}`)
+    : `${inner}\ntitle: ${value}`
+
+  return `---\n${nextInner}\n---\n\n${source.slice(match[0].length)}`
+}
+
 async function readChapters(
   contentDir: string,
   components: Components,

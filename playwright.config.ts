@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test'
 
 const bookIntegrationTests = [
   /tests\/books\/book-order-reorder\.spec\.ts/,
+  /tests\/books\/book-chapter-create\.spec\.ts/,
+  /tests\/books\/book-chapter-rename\.spec\.ts/,
   /tests\/editor\/.*\.spec\.ts/,
 ]
 

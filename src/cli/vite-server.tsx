@@ -1,13 +1,13 @@
 import { createReadStream, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { type IncomingMessage, type ServerResponse } from 'node:http'
-import { dirname, extname, resolve } from 'node:path'
+import { dirname, extname, join, resolve } from 'node:path'
 import mdx from '@mdx-js/rollup'
 import react from '@vitejs/plugin-react'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { createServer, type Plugin, type ViteDevServer } from 'vite'
 
-import { resolveBooksViaVite, withOrder, withOrderLock } from '@/engine/books'
+import { resolveBooksViaVite, withOrder, withOrderLock, withTitle } from '@/engine/books'
 import { renderDocument, renderTopbar } from '@/engine/document'
 import { PAGED_POLYFILL, RUNTIME_DIR } from '@/engine/render'
 
@@ -300,6 +300,38 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     )
   })
 
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'PUT'
+        ? /^\/books\/([^/]+)\/chapters\/([^/]+)\/title$/.exec(request.url ?? '')
+        : null
+    const [, slug, chapterSlug] = match ?? []
+
+    if (slug === undefined || chapterSlug === undefined) {
+      next()
+      return
+    }
+
+    renameChapter(server, root, slug, chapterSlug, request, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'POST' ? /^\/books\/([^/]+)\/chapters$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    createChapter(server, root, slug, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
   await server.listen()
   server.printUrls()
 
@@ -413,6 +445,73 @@ async function reorderChapter(
 
   response.statusCode = 204
   response.end()
+}
+
+async function renameChapter(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  chapterSlug: string,
+  request: IncomingMessage,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+  const chapter = book?.chapters.find((candidate) => candidate.slug === chapterSlug)
+
+  if (!chapter) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  const title = await readRequestBody(request)
+  writeFileSync(chapter.path, withTitle(readFileSync(chapter.path, 'utf-8'), title))
+  response.statusCode = 204
+  response.end()
+}
+
+const DEFAULT_CHAPTER_TITLE = 'Untitled chapter'
+
+async function createChapter(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+  const existingChapter = book?.chapters[0]
+
+  if (!book || !existingChapter) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  const contentDir = dirname(existingChapter.path)
+
+  const chapter = await withOrderLock(contentDir, () => {
+    const chapterSlug = `chapter-${nextChapterIndex(contentDir)}`
+    const nextOrder = Math.max(0, ...book.chapters.map((candidate) => candidate.order ?? 0)) + 1
+    const source = withTitle(withOrder('', nextOrder), DEFAULT_CHAPTER_TITLE)
+    writeFileSync(join(contentDir, `${chapterSlug}.mdx`), source)
+    return { slug: chapterSlug, title: DEFAULT_CHAPTER_TITLE }
+  })
+
+  response.statusCode = 201
+  response.setHeader('Content-Type', 'application/json')
+  response.end(JSON.stringify(chapter))
+}
+
+// Only avoids colliding with other chapter-N files - unrelated to chapters named otherwise
+function nextChapterIndex(contentDir: string): number {
+  const indices = readdirSync(contentDir)
+    .map((file) => /^chapter-(\d+)\.mdx$/.exec(file)?.[1])
+    .filter((digits): digits is string => digits !== undefined)
+    .map(Number)
+
+  return indices.length > 0 ? Math.max(...indices) + 1 : 1
 }
 
 function readRequestBody(request: IncomingMessage): Promise<string> {
