@@ -165,6 +165,12 @@ body {
   cursor: pointer;
 }
 
+.chapter-nav-add[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
 .chapter-nav-list {
   display: flex;
   flex-direction: column;
