@@ -110,6 +110,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build project
+        run: npm run build
+
+      - name: Install sample book dependencies
+        run: npm run example:install
+
       - name: Get installed Playwright version
         id: playwright-version
         run: echo "version=$(sh docker/playwright/get-playwright-version.sh)" >> "$GITHUB_OUTPUT"
