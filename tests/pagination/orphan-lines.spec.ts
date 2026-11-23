@@ -1,23 +1,9 @@
-import path from 'node:path'
-import { expect, test, type Page } from '@playwright/test'
-
-declare global {
-  interface Window {
-    PAGED_READY?: boolean
-  }
-}
-
-async function paginate(page: Page, fixtureName: string) {
-  const fixture = path.join(__dirname, 'fixtures', fixtureName)
-  await page.goto(`file://${fixture}`)
-  await page.waitForFunction(() => window.PAGED_READY === true)
-  return page.locator('.pagedjs_page')
-}
+import { expect, test } from './test'
 
 test('MinOrphanLines defers an entire paragraph rather than leaving a single orphan line', async ({
-  page,
+  paginateFixture,
 }) => {
-  const pages = await paginate(page, 'orphan-lines.html')
+  const pages = await paginateFixture('orphan-lines.html')
   await expect(pages).toHaveCount(2)
 
   const firstPageText = await pages.nth(0).innerText()
@@ -30,9 +16,9 @@ test('MinOrphanLines defers an entire paragraph rather than leaving a single orp
 })
 
 test('MinOrphanLines leaves a break alone when the orphan rule is already satisfied', async ({
-  page,
+  paginateFixture,
 }) => {
-  const pages = await paginate(page, 'orphan-lines-no-op.html')
+  const pages = await paginateFixture('orphan-lines-no-op.html')
   await expect(pages).toHaveCount(2)
 
   const firstPageText = await pages.nth(0).innerText()

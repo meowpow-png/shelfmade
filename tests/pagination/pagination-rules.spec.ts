@@ -1,18 +1,10 @@
-import path from 'node:path'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type PaginateFixture } from './test'
 
-declare global {
-  interface Window {
-    PAGED_READY?: boolean
-  }
-}
-
-async function expectLines4and5SplitAcrossPages(page: Page, fixtureName: string) {
-  const fixture = path.join(__dirname, 'fixtures', fixtureName)
-  await page.goto(`file://${fixture}`)
-  await page.waitForFunction(() => window.PAGED_READY === true)
-
-  const pages = page.locator('.pagedjs_page')
+async function expectLines4and5SplitAcrossPages(
+  paginateFixture: PaginateFixture,
+  fixtureName: string,
+) {
+  const pages = await paginateFixture(fixtureName)
   await expect(pages).toHaveCount(2)
 
   const firstPageText = await pages.nth(0).innerText()
@@ -25,13 +17,13 @@ async function expectLines4and5SplitAcrossPages(page: Page, fixtureName: string)
 }
 
 test('MinWidowLines relocates a break that would otherwise leave a single-line widow', async ({
-  page,
+  paginateFixture,
 }) => {
-  await expectLines4and5SplitAcrossPages(page, 'min-widow-lines.html')
+  await expectLines4and5SplitAcrossPages(paginateFixture, 'min-widow-lines.html')
 })
 
 test('MinWidowLines leaves a break alone when the widow rule is already satisfied', async ({
-  page,
+  paginateFixture,
 }) => {
-  await expectLines4and5SplitAcrossPages(page, 'min-widow-lines-no-op.html')
+  await expectLines4and5SplitAcrossPages(paginateFixture, 'min-widow-lines-no-op.html')
 })

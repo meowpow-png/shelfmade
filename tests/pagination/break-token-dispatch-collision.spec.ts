@@ -1,34 +1,10 @@
-import path from 'node:path'
-import { expect, test } from '@playwright/test'
-
-declare global {
-  interface Window {
-    __TEST_MEASURED__: unknown
-    PaginationRules: {
-      [ruleName: string]: {
-        compute: (
-          breakToken: unknown,
-          overflow: unknown,
-          rendered: Element,
-        ) => { token: { node: Node; offset: number }; apply: () => void } | undefined
-      }
-    } & {
-      BreakTokenDispatch: new () => {
-        onBreakToken: (
-          breakToken: unknown,
-          overflow: unknown,
-          rendered: Element,
-        ) => { node: Node; offset: number } | undefined
-      }
-    }
-  }
-}
+import { expect, test } from './test'
 
 test('BreakTokenDispatch keeps a heading with its paragraph over a competing orphan/widow fix', async ({
   page,
+  openFixture,
 }) => {
-  const fixture = path.join(__dirname, 'fixtures', 'break-token-dispatch-collision.html')
-  await page.goto(`file://${fixture}`)
+  await openFixture('break-token-dispatch-collision.html')
 
   const result = await page.evaluate(() => {
     // Forces the exact 3-way collision: linesBefore === 1 (heading rule,
@@ -70,7 +46,7 @@ test('BreakTokenDispatch keeps a heading with its paragraph over a competing orp
 
     // Spy on apply, then run the real dispatcher: it short-circuits at
     // the first matching rule, so only that rule's apply fires.
-    function spyOnApply(ruleName: string) {
+    function spyOnApply(ruleName: 'KeepHeadingWithParagraph' | 'MinWidowLines' | 'MinOrphanLines') {
       const rule = window.PaginationRules[ruleName]
       const originalCompute = rule.compute
       const calls = { applied: false }

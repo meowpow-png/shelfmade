@@ -1,28 +1,13 @@
-import path from 'node:path'
-import { expect, test } from '@playwright/test'
-
-declare global {
-  interface Window {
-    PaginationRules: {
-      KeepHeadingWithParagraph: {
-        compute: (
-          breakToken: { node: Node; offset: number },
-          overflow: Range,
-          rendered: Element,
-        ) => { token: { node: Node; offset: number }; apply: () => void } | undefined
-      }
-    }
-  }
-}
+import { expect, test } from './test'
 
 // KeepHeadingWithParagraph relies on measureBreak's linesBefore
 // count. A truncated render clone can make it think too few
 // paragraph lines stayed with the heading when plenty actually did.
 test('KeepHeadingWithParagraph leaves the break alone when enough lines already follow, even with a truncated render clone', async ({
   page,
+  openFixture,
 }) => {
-  const fixture = path.join(__dirname, 'fixtures', 'heading-paragraph-clone.html')
-  await page.goto(`file://${fixture}`)
+  await openFixture('heading-paragraph-clone.html')
 
   const result = await page.evaluate(() => {
     // Heading + source paragraph, connected, with 5 deterministic lines
@@ -72,9 +57,9 @@ test('KeepHeadingWithParagraph leaves the break alone when enough lines already 
 // even when the render clone hasn't rendered anything for this paragraph yet.
 test('KeepHeadingWithParagraph still moves the heading and paragraph together when too few lines follow, even with a truncated render clone', async ({
   page,
+  openFixture,
 }) => {
-  const fixture = path.join(__dirname, 'fixtures', 'heading-paragraph-clone.html')
-  await page.goto(`file://${fixture}`)
+  await openFixture('heading-paragraph-clone.html')
 
   const result = await page.evaluate(() => {
     // Heading + source paragraph, connected, with 3 deterministic lines via

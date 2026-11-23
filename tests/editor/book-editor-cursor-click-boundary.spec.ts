@@ -1,36 +1,10 @@
-import { expect, test, type Locator, type Page } from '@playwright/test'
-import { type ViteDevServer } from 'vite'
+import { type Locator, type Page } from '@playwright/test'
 
-import { startViteServer } from '../../src/cli/vite-server'
-import { createBookSandbox, type BookSandbox } from '../book-sandbox'
-
-let sandbox: BookSandbox
-let server: ViteDevServer
-let baseURL: string
+import { expect, test } from './test'
 
 // Tall enough that CM6 doesn't virtualize chapter lines out of the DOM
 test.use({ viewport: { width: 1280, height: 4000 } })
-
-// Per-worker port - chromium and firefox projects run in parallel
-// Playwright requires the fixtures arg be destructured even when unused
-// eslint-disable-next-line no-empty-pattern
-test.beforeAll(async ({}, testInfo) => {
-  sandbox = createBookSandbox()
-  const port = 8399 + testInfo.workerIndex
-  server = await startViteServer(sandbox.root, port)
-  baseURL = `http://127.0.0.1:${port}`
-})
-
-test.afterAll(async () => {
-  await server.close()
-  sandbox.cleanup()
-})
-
-function chapterWrapper(page: Page, title: string) {
-  return page
-    .locator('.editor-chapter-wrapper')
-    .filter({ has: page.locator('.editor-chapter-title', { hasText: title }) })
-}
+test.use({ editorServerOptions: { portBase: 8399 } })
 
 async function clickedLine(page: Page) {
   return page.evaluate(() => {
@@ -53,12 +27,13 @@ async function clickAtFraction(locator: Locator, xFraction: number, yFraction: n
 }
 
 test('clicking the heading-margin dead zone or the heading text lands the cursor in the heading', async ({
+  chapter,
+  openBook,
   page,
 }) => {
-  await page.goto(`${baseURL}/field-notes.html`)
-  await page.waitForFunction(() => document.getElementById('book-root')?.style.visibility === '')
+  await openBook('field-notes')
 
-  const heading = chapterWrapper(page, 'Chapter One').locator('.cm-heading-2', {
+  const heading = chapter('Chapter One').locator('.cm-heading-2', {
     hasText: 'Reading the water',
   })
 
@@ -72,12 +47,13 @@ test('clicking the heading-margin dead zone or the heading text lands the cursor
 })
 
 test('clicking the blank lines around a heading lands the cursor on that blank line, not the heading', async ({
+  chapter,
+  openBook,
   page,
 }) => {
-  await page.goto(`${baseURL}/field-notes.html`)
-  await page.waitForFunction(() => document.getElementById('book-root')?.style.visibility === '')
+  await openBook('field-notes')
 
-  const heading = chapterWrapper(page, 'Chapter One').locator('.cm-heading-2', {
+  const heading = chapter('Chapter One').locator('.cm-heading-2', {
     hasText: 'Reading the water',
   })
   const blankBefore = heading.locator('xpath=preceding-sibling::*[1]')

@@ -1,25 +1,10 @@
-import path from 'node:path'
-import { expect, test } from '@playwright/test'
-
-declare global {
-  interface Window {
-    PaginationRules: {
-      MinOrphanLines: {
-        compute: (
-          breakToken: { node: Node; offset: number },
-          overflow: unknown,
-          rendered: Element,
-        ) => { token: { node: Node; offset: number }; apply: () => void } | undefined
-      }
-    }
-  }
-}
+import { expect, test } from './test'
 
 test('MinOrphanLines defers the whole paragraph when handed a truncated in-progress render clone', async ({
   page,
+  openFixture,
 }) => {
-  const fixture = path.join(__dirname, 'fixtures', 'min-orphan-lines-clone.html')
-  await page.goto(`file://${fixture}`)
+  await openFixture('min-orphan-lines-clone.html')
 
   const result = await page.evaluate(() => {
     const fullText = 'x'.repeat(60)

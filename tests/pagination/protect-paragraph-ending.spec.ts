@@ -1,18 +1,6 @@
-import path from 'node:path'
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import { type Locator } from '@playwright/test'
 
-declare global {
-  interface Window {
-    PAGED_READY?: boolean
-  }
-}
-
-async function paginate(page: Page) {
-  const fixture = path.join(__dirname, 'fixtures', 'protect-paragraph-ending.html')
-  await page.goto(`file://${fixture}`)
-  await page.waitForFunction(() => window.PAGED_READY === true)
-  return page.locator('.pagedjs_page')
-}
+import { expect, test } from './test'
 
 async function lineTop(locator: Locator) {
   return locator.evaluate((element) => Math.round(element.getBoundingClientRect().top))
@@ -41,8 +29,8 @@ async function lastWordLineTops(paragraph: Locator) {
   })
 }
 
-test('binds a short final word to the preceding word', async ({ page }) => {
-  const pages = await paginate(page)
+test('binds a short final word to the preceding word', async ({ paginateFixture }) => {
+  const pages = await paginateFixture('protect-paragraph-ending.html')
   await expect(pages).toHaveCount(1)
 
   const paragraph = pages.locator('#short-ending')
@@ -55,8 +43,8 @@ test('binds a short final word to the preceding word', async ({ page }) => {
   expect(await lineTop(previousWord)).toBe(lineTops[0])
 })
 
-test('keeps a final word with a hyphenation opportunity intact', async ({ page }) => {
-  const pages = await paginate(page)
+test('keeps a final word with a hyphenation opportunity intact', async ({ paginateFixture }) => {
+  const pages = await paginateFixture('protect-paragraph-ending.html')
   const paragraph = pages.locator('#hyphenated-ending')
 
   const text = await paragraph.evaluate((element) => element.textContent ?? '')
@@ -67,8 +55,8 @@ test('keeps a final word with a hyphenation opportunity intact', async ({ page }
   expect(lineTops).toHaveLength(1)
 })
 
-test('does not bind a longer final word to the preceding word', async ({ page }) => {
-  const pages = await paginate(page)
+test('does not bind a longer final word to the preceding word', async ({ paginateFixture }) => {
+  const pages = await paginateFixture('protect-paragraph-ending.html')
   const paragraph = pages.locator('#long-ending')
 
   expect(await textWithoutWordJoiners(paragraph)).toBe('Ostaje ovdje zauvijek.')

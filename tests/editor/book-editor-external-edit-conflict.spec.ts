@@ -1,125 +1,102 @@
 import { readFileSync, writeFileSync } from 'node:fs'
-import { expect, test, type Page } from '@playwright/test'
-import { type ViteDevServer } from 'vite'
 
-import { startViteServer } from '../../src/cli/vite-server'
-import { acquireLock, chapterPath, createBookSandbox, type BookSandbox } from '../book-sandbox'
+import { chapterPath } from '../book-sandbox'
+import { expect, test } from './test'
 
-// Avoids contention between concurrent Vite servers/pagedjs runs across workers
+// Tests share a mutable worker sandbox and must run in declaration order.
 test.describe.configure({ mode: 'serial' })
-
-let sandbox: BookSandbox
-let server: ViteDevServer
-let baseURL: string
-let releaseLock: () => void
-
-// Per-worker port, since chromium/firefox projects run in parallel
-// Playwright requires the fixtures arg be destructured even when unused
-// eslint-disable-next-line no-empty-pattern
-test.beforeAll(async ({}, testInfo) => {
-  // serial mode alone doesn't stop chromium/firefox workers overlapping - this mutex does
-  testInfo.setTimeout(180_000)
-  releaseLock = await acquireLock('external-edit-conflict')
-  sandbox = createBookSandbox()
-  const port = 8299 + testInfo.workerIndex
-  server = await startViteServer(sandbox.root, port)
-  baseURL = `http://127.0.0.1:${port}`
-})
-
-test.afterAll(async () => {
-  try {
-    await server?.close()
-  } finally {
-    sandbox?.cleanup()
-    releaseLock?.()
-  }
-})
-
-// Only the selected chapter is ever mounted, so this matches whichever one is shown
-function chapterWrapper(page: Page, title: string) {
-  return page
-    .locator('.editor-chapter-wrapper')
-    .filter({ has: page.locator('.editor-chapter-title', { hasText: title }) })
-}
-
-async function selectChapter(page: Page, title: string) {
-  await page.getByRole('button', { name: title, exact: true }).click()
-  await expect(chapterWrapper(page, title)).toBeVisible()
-}
+test.use({ editorServerOptions: { portBase: 8299 } })
 
 test('an external edit to a clean chapter shows the banner and leaves the pane untouched', async ({
+  chapter,
+  openBook,
   page,
+  sandbox,
 }) => {
-  await page.goto(`${baseURL}/field-notes.html`)
-  await page.waitForFunction(() => document.getElementById('book-root')?.style.visibility === '')
+  await openBook('field-notes')
 
   // Chapter One is selected by default
-  const chapter = chapterWrapper(page, 'Chapter One')
-  const paneBefore = await chapter.locator('.cm-content').innerText()
+  const selectedChapter = chapter('Chapter One')
+  const paneBefore = await selectedChapter.locator('.cm-content').innerText()
 
   const chapterFile = chapterPath(sandbox, 'field-notes', 'chapter-1.mdx')
   const original = readFileSync(chapterFile, 'utf-8')
   writeFileSync(chapterFile, original.replace('The Harbour at Dawn', 'A Different Title'))
 
-  await expect(chapter.locator('.editor-conflict-banner')).toBeVisible()
-  await expect(chapter.locator('.cm-content')).toHaveText(paneBefore, { useInnerText: true })
+  await expect(selectedChapter.locator('.editor-conflict-banner')).toBeVisible()
+  await expect(selectedChapter.locator('.cm-content')).toHaveText(paneBefore, {
+    useInnerText: true,
+  })
 })
 
 test('an external edit to a dirty chapter shows the banner and keeps local edits', async ({
+  chapter,
+  openBook,
   page,
+  sandbox,
+  selectChapter,
 }) => {
-  await page.goto(`${baseURL}/field-notes.html`)
-  await page.waitForFunction(() => document.getElementById('book-root')?.style.visibility === '')
-  await selectChapter(page, 'Chapter Two')
+  await openBook('field-notes')
+  await selectChapter('Chapter Two')
 
-  const chapter = chapterWrapper(page, 'Chapter Two')
-  await chapter.locator('.cm-content').click()
+  const selectedChapter = chapter('Chapter Two')
+  await selectedChapter.locator('.cm-content').click()
   // Move cursor to doc-start so typing never lands inside a tag
   await page.keyboard.press('Control+Home')
   await page.keyboard.type('Local edit that must survive.')
-  const paneBefore = await chapter.locator('.cm-content').innerText()
+  const paneBefore = await selectedChapter.locator('.cm-content').innerText()
 
   const chapterFile = chapterPath(sandbox, 'field-notes', 'chapter-2.mdx')
   const original = readFileSync(chapterFile, 'utf-8')
   writeFileSync(chapterFile, `${original}\nExternally appended paragraph.\n`)
 
-  await expect(chapter.locator('.editor-conflict-banner')).toBeVisible()
-  await expect(chapter.locator('.cm-content')).toHaveText(paneBefore, { useInnerText: true })
+  await expect(selectedChapter.locator('.editor-conflict-banner')).toBeVisible()
+  await expect(selectedChapter.locator('.cm-content')).toHaveText(paneBefore, {
+    useInnerText: true,
+  })
 })
 
-test('"Load external changes" loads disk content and clears the banner', async ({ page }) => {
-  await page.goto(`${baseURL}/field-notes.html`)
-  await page.waitForFunction(() => document.getElementById('book-root')?.style.visibility === '')
-  await selectChapter(page, 'Chapter Three')
+test('"Load external changes" loads disk content and clears the banner', async ({
+  chapter,
+  openBook,
+  sandbox,
+  selectChapter,
+}) => {
+  await openBook('field-notes')
+  await selectChapter('Chapter Three')
 
-  const chapter = chapterWrapper(page, 'Chapter Three')
+  const selectedChapter = chapter('Chapter Three')
 
   const chapterFile = chapterPath(sandbox, 'field-notes', 'chapter-3.mdx')
   const original = readFileSync(chapterFile, 'utf-8')
   writeFileSync(chapterFile, original.replace("The Lighthouse Keeper's Garden", 'A New Heading'))
 
-  await expect(chapter.locator('.editor-conflict-banner')).toBeVisible()
+  await expect(selectedChapter.locator('.editor-conflict-banner')).toBeVisible()
 
-  await chapter.getByRole('button', { name: 'Load external changes' }).click()
+  await selectedChapter.getByRole('button', { name: 'Load external changes' }).click()
 
-  await expect(chapter.locator('.editor-conflict-banner')).toHaveCount(0)
-  await expect(chapter.locator('.cm-content')).toContainText('A New Heading')
+  await expect(selectedChapter.locator('.editor-conflict-banner')).toHaveCount(0)
+  await expect(selectedChapter.locator('.cm-content')).toContainText('A New Heading')
 })
 
-test('autosave is not paused while a banner is showing', async ({ page }) => {
-  await page.goto(`${baseURL}/good-dog-mom.html`)
-  await page.waitForFunction(() => document.getElementById('book-root')?.style.visibility === '')
+test('autosave is not paused while a banner is showing', async ({
+  chapter,
+  openBook,
+  page,
+  sandbox,
+}) => {
+  await openBook('good-dog-mom')
 
   // "Reading Her Signals" is selected by default
-  const chapter = chapterWrapper(page, 'Reading Her Signals')
+  const selectedChapter = chapter('Reading Her Signals')
 
   const chapterFile = chapterPath(sandbox, 'good-dog-mom', '1-reading-her-signals.mdx')
   const original = readFileSync(chapterFile, 'utf-8')
   writeFileSync(chapterFile, original.replace('vocabulary.', 'a whole vocabulary.'))
 
-  await expect(chapter.locator('.editor-conflict-banner')).toBeVisible()
+  await expect(selectedChapter.locator('.editor-conflict-banner')).toBeVisible()
 
-  await chapter.locator('.cm-content').click()
+  await selectedChapter.locator('.cm-content').click()
   await page.keyboard.press('Control+Home')
   await page.keyboard.type('Still typing through the conflict. ')
 
@@ -129,14 +106,17 @@ test('autosave is not paused while a banner is showing', async ({ page }) => {
 })
 
 test('an external edit to a hidden chapter never banners, and is silently overwritten on autosave', async ({
+  chapter,
+  openBook,
   page,
+  sandbox,
+  selectChapter,
 }) => {
-  await page.goto(`${baseURL}/good-dog-mom.html`)
-  await page.waitForFunction(() => document.getElementById('book-root')?.style.visibility === '')
+  await openBook('good-dog-mom')
 
   // Neither chapter is touched by the other tests in this file, which share this sandbox
-  await selectChapter(page, 'Becoming Her Secure Base')
-  await selectChapter(page, 'The Rituals That Build Trust')
+  await selectChapter('Becoming Her Secure Base')
+  await selectChapter('The Rituals That Build Trust')
 
   const chapterFile = chapterPath(sandbox, 'good-dog-mom', '2-becoming-her-secure-base.mdx')
   const original = readFileSync(chapterFile, 'utf-8')
@@ -146,10 +126,10 @@ test('an external edit to a hidden chapter never banners, and is silently overwr
   await expect(page.locator('.editor-conflict-banner')).toHaveCount(0)
 
   // Switching back doesn't retroactively surface the conflict either
-  await selectChapter(page, 'Becoming Her Secure Base')
+  await selectChapter('Becoming Her Secure Base')
   await expect(page.locator('.editor-conflict-banner')).toHaveCount(0)
 
-  await chapterWrapper(page, 'Becoming Her Secure Base').locator('.cm-content').click()
+  await chapter('Becoming Her Secure Base').locator('.cm-content').click()
   await page.keyboard.press('Control+Home')
   await page.keyboard.type('Overwriting from the editor. ')
 

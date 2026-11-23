@@ -1,28 +1,13 @@
-import path from 'node:path'
-import { expect, test } from '@playwright/test'
-
-declare global {
-  interface Window {
-    PaginationRules: {
-      MinWidowLines: {
-        compute: (
-          breakToken: { node: Node; offset: number },
-          overflow: Range,
-          rendered: Element,
-        ) => { token: { node: Node; offset: number }; apply: () => void } | undefined
-      }
-    }
-  }
-}
+import { expect, test } from './test'
 
 // MinWidowLines relies on measureBreak's linesBefore count. A severely
 // truncated render clone can make it look like there isn't enough content
 // to evaluate, leaving a genuine widow unprotected.
 test('MinWidowLines still defers a genuine widow when handed a render clone with no lines rendered yet', async ({
   page,
+  openFixture,
 }) => {
-  const fixture = path.join(__dirname, 'fixtures', 'min-widow-lines-clone.html')
-  await page.goto(`file://${fixture}`)
+  await openFixture('min-widow-lines-clone.html')
 
   const result = await page.evaluate(() => {
     // Source paragraph, connected as it is while paged.js lays it out, with
@@ -75,9 +60,9 @@ test('MinWidowLines still defers a genuine widow when handed a render clone with
 // when the render clone hasn't rendered anything for this paragraph yet.
 test('MinWidowLines leaves a break alone when the widow rule is already satisfied, even with a truncated render clone', async ({
   page,
+  openFixture,
 }) => {
-  const fixture = path.join(__dirname, 'fixtures', 'min-widow-lines-clone.html')
-  await page.goto(`file://${fixture}`)
+  await openFixture('min-widow-lines-clone.html')
 
   const result = await page.evaluate(() => {
     // Source paragraph, connected, with 4 deterministic lines via <br>.
