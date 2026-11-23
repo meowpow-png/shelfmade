@@ -1,13 +1,13 @@
 import { createReadStream, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { type IncomingMessage, type ServerResponse } from 'node:http'
-import { extname, resolve } from 'node:path'
+import { dirname, extname, resolve } from 'node:path'
 import mdx from '@mdx-js/rollup'
 import react from '@vitejs/plugin-react'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { createServer, type Plugin, type ViteDevServer } from 'vite'
 
-import { resolveBooksViaVite } from '@/engine/books'
+import { resolveBooksViaVite, withOrder, withOrderLock } from '@/engine/books'
 import { renderDocument, renderTopbar } from '@/engine/document'
 import { PAGED_POLYFILL, RUNTIME_DIR } from '@/engine/render'
 
@@ -283,6 +283,23 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     )
   })
 
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'PUT'
+        ? /^\/books\/([^/]+)\/chapters\/([^/]+)\/order$/.exec(request.url ?? '')
+        : null
+    const [, slug, chapterSlug] = match ?? []
+
+    if (slug === undefined || chapterSlug === undefined) {
+      next()
+      return
+    }
+
+    reorderChapter(server, root, slug, chapterSlug, request, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
   await server.listen()
   server.printUrls()
 
@@ -349,6 +366,51 @@ async function saveChapter(
 
   const content = await readRequestBody(request)
   writeFileSync(chapter.path, content)
+  response.statusCode = 204
+  response.end()
+}
+
+async function reorderChapter(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  chapterSlug: string,
+  request: IncomingMessage,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+  const chapter = book?.chapters.find((candidate) => candidate.slug === chapterSlug)
+
+  if (!book || !chapter) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  const targetOrder = Number(await readRequestBody(request))
+  if (!Number.isInteger(targetOrder) || targetOrder < 1 || targetOrder > book.chapters.length) {
+    response.statusCode = 400
+    response.end('Invalid order')
+    return
+  }
+
+  const contentDir = dirname(chapter.path)
+  withOrderLock(contentDir, () => {
+    // This route only ever runs via the dev server, which always backfills order
+    const ordered = [...book.chapters].sort((a, b) => a.order! - b.order!)
+    const fromIndex = ordered.findIndex((candidate) => candidate.slug === chapterSlug)
+    // chapterSlug was already confirmed present in book.chapters above
+    const moved = ordered.splice(fromIndex, 1)[0]!
+    ordered.splice(targetOrder - 1, 0, moved)
+
+    ordered.forEach((candidate, index) => {
+      const newOrder = index + 1
+      if (candidate.order === newOrder) return
+      writeFileSync(candidate.path, withOrder(readFileSync(candidate.path, 'utf-8'), newOrder))
+    })
+  })
+
   response.statusCode = 204
   response.end()
 }

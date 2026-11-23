@@ -197,3 +197,7 @@ body {
   background: var(--color-surface);
   font-weight: 600;
 }
+
+.chapter-nav-dragging {
+  opacity: 0.5;
+}

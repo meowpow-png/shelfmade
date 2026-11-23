@@ -71,6 +71,13 @@ export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
   )
   const selectedChapter = chapters.find((chapter) => chapter.slug === selectedSlug) ?? chapters[0]
 
+  // Pins a default selection once, so a later reorder can't silently switch the open chapter
+  useEffect(() => {
+    if (selectedSlug === undefined && chapters[0]) selectedChapterStore.set(chapters[0].slug)
+    // selectedChapterStore is stable, not a render input
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapters, selectedSlug])
+
   // Only the selected chapter is ever mounted, so only it can have a pending save or conflict
   const activeChapterRef = useRef<
     { slug: string; frontmatter: string; lastSynced: string } | undefined

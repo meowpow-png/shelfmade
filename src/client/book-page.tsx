@@ -72,7 +72,9 @@ function renderEditor(root: Root, chapterNavRoot: Root | undefined, chapters: Ed
       saveDebounceMs={window.__SHELFMADE_REMOUNT_DEBOUNCE_MS__}
     />,
   )
-  chapterNavRoot?.render(<ChapterNav chapters={chapters} />)
+  chapterNavRoot?.render(
+    <ChapterNav chapters={chapters} bookSlug={window.__SHELFMADE_BOOK_SLUG__} />,
+  )
 }
 
 function fetchChapters(bookSlug: string): Promise<EditorChapter[]> {

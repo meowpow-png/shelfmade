@@ -17,7 +17,8 @@ export interface Book {
   dir: string
   // Raw chapter text for the editor - separate from App, which only renders the compiled MDX.
   // path is server-side only (the save route's write target), never sent to the browser
-  chapters: { slug: string; title: string; content: string; path: string }[]
+  // order is only ever set by the dev-server's eager backfill, never by a static build
+  chapters: { slug: string; title: string; content: string; path: string; order?: number }[]
   App: ComponentType
 }
 
