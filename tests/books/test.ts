@@ -15,7 +15,7 @@ const FIELD_NOTES_FILES = ['chapter-1.mdx', 'chapter-2.mdx', 'chapter-3.mdx'] as
 interface FieldNotesFixture {
   bytes: (file: string) => Buffer
   files: readonly string[]
-  load: (backfillOrder?: boolean) => ReturnType<typeof resolveBooks>[number]
+  load: (backfillOrder?: boolean) => Promise<Awaited<ReturnType<typeof resolveBooks>>[number]>
   orderOf: (file: string) => number
   sandbox: BookSandbox
   setOrder: (file: string, order: number) => void
@@ -52,8 +52,8 @@ export const test = base.extend<BookFixtures>({
       await provide({
         bytes: (file) => readFileSync(pathOf(file)),
         files: FIELD_NOTES_FILES,
-        load: (backfillOrder = true) => {
-          const [book] = resolveBooks(
+        load: async (backfillOrder = true) => {
+          const [book] = await resolveBooks(
             { books: { 'field-notes': { title: 'Field Notes' } } },
             sandbox.root,
             { backfillOrder },

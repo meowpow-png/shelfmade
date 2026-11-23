@@ -22,43 +22,46 @@ export async function resolveBooksViaVite(server: ViteDevServer, root: string): 
 }
 
 // backfillOrder is dev-server only - a build must never write to source content
-export function resolveBooks(
+export async function resolveBooks(
   config: ShelfmadeConfig,
   root: string,
   { backfillOrder = false }: { backfillOrder?: boolean } = {},
-): Book[] {
-  return Object.entries(config.books).map(([slug, book]) => {
-    const dir = resolve(root, book.dir ?? join('books', slug))
-    const contentDir = resolve(dir, book.content ?? 'content')
-    const components = { ...config.components, ...book.components }
-    const chapters = readChapters(contentDir, components, backfillOrder)
-    const Layout = book.App ?? DefaultLayout
+): Promise<Book[]> {
+  return Promise.all(
+    Object.entries(config.books).map(async ([slug, book]) => {
+      const dir = resolve(root, book.dir ?? join('books', slug))
+      const contentDir = resolve(dir, book.content ?? 'content')
+      const components = { ...config.components, ...book.components }
+      const chapters = await readChapters(contentDir, components, backfillOrder)
+      const Layout = book.App ?? DefaultLayout
 
-    return {
-      slug,
-      title: book.title,
-      documentTitle: config.titlePrefix ? `${config.titlePrefix} — ${book.title}` : book.title,
-      lang: book.lang ?? config.lang ?? 'en',
-      pageSize: resolvePageSize(book.pageFormat ?? config.pageFormat ?? 'A5'),
-      dir,
-      // path is for vite-server.tsx's save route only - never sent to the browser
-      chapters: chapters.map(({ slug, frontmatter, content }) => ({
+      return {
         slug,
-        title: typeof frontmatter.title === 'string' ? frontmatter.title : slug,
-        content,
-        path: join(contentDir, `${slug}.mdx`),
-        order: typeof frontmatter.order === 'number' ? frontmatter.order : undefined,
-      })),
-      App: () => <Layout title={book.title} chapters={chapters} />,
-    }
-  })
+        title: book.title,
+        documentTitle: config.titlePrefix ? `${config.titlePrefix} — ${book.title}` : book.title,
+        lang: book.lang ?? config.lang ?? 'en',
+        pageSize: resolvePageSize(book.pageFormat ?? config.pageFormat ?? 'A5'),
+        dir,
+        // path is for vite-server.tsx's save route only - never sent to the browser
+        chapters: chapters.map(({ slug, frontmatter, content }) => ({
+          slug,
+          title: typeof frontmatter.title === 'string' ? frontmatter.title : slug,
+          content,
+          path: join(contentDir, `${slug}.mdx`),
+          order: typeof frontmatter.order === 'number' ? frontmatter.order : undefined,
+        })),
+        App: () => <Layout title={book.title} chapters={chapters} />,
+      }
+    }),
+  )
 }
 
 const LOCK_STALE_MS = 30_000
 const LOCK_WAIT_MS = 10_000
+const LOCK_RETRY_MS = 50
 
 // Atomic mkdir as a cross-process mutex against the backfill below
-export function withOrderLock<T>(contentDir: string, fn: () => T): T {
+export async function withOrderLock<T>(contentDir: string, fn: () => T | Promise<T>): Promise<T> {
   const lockPath = join(contentDir, '.order.lock')
   const start = Date.now()
 
@@ -77,11 +80,12 @@ export function withOrderLock<T>(contentDir: string, fn: () => T): T {
       }
       if (Date.now() - start > LOCK_WAIT_MS)
         throw new Error(`Timed out acquiring order lock: ${contentDir}`)
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, LOCK_RETRY_MS))
     }
   }
 
   try {
-    return fn()
+    return await fn()
   } finally {
     rmSync(lockPath, { recursive: true, force: true })
   }
@@ -102,11 +106,11 @@ export function withOrder(source: string, order: number): string {
   return `---\n${nextInner}\n---\n\n${source.slice(match[0].length)}`
 }
 
-function readChapters(
+async function readChapters(
   contentDir: string,
   components: Components,
   backfillOrder: boolean,
-): Chapter[] {
+): Promise<Chapter[]> {
   const chapters = readChaptersUnlocked(contentDir, components, false)
   if (!backfillOrder || chapters.every((chapter) => typeof chapter.frontmatter.order === 'number'))
     return chapters

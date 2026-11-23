@@ -396,7 +396,7 @@ async function reorderChapter(
   }
 
   const contentDir = dirname(chapter.path)
-  withOrderLock(contentDir, () => {
+  await withOrderLock(contentDir, () => {
     // This route only ever runs via the dev server, which always backfills order
     const ordered = [...book.chapters].sort((a, b) => a.order! - b.order!)
     const fromIndex = ordered.findIndex((candidate) => candidate.slug === chapterSlug)
