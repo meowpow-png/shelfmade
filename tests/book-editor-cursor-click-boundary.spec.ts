@@ -1,11 +1,10 @@
-import { resolve } from 'node:path'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { type ViteDevServer } from 'vite'
 
 import { startViteServer } from '../src/cli/vite-server'
+import { createBookSandbox, type BookSandbox } from './book-sandbox'
 
-const ROOT = resolve(__dirname, '../examples/sample-book')
-
+let sandbox: BookSandbox
 let server: ViteDevServer
 let baseURL: string
 
@@ -16,13 +15,15 @@ test.use({ viewport: { width: 1280, height: 4000 } })
 // Playwright requires the fixtures arg be destructured even when unused
 // eslint-disable-next-line no-empty-pattern
 test.beforeAll(async ({}, testInfo) => {
+  sandbox = createBookSandbox()
   const port = 8399 + testInfo.workerIndex
-  server = await startViteServer(ROOT, port)
+  server = await startViteServer(sandbox.root, port)
   baseURL = `http://127.0.0.1:${port}`
 })
 
 test.afterAll(async () => {
   await server.close()
+  sandbox.cleanup()
 })
 
 function chapterWrapper(page: Page, title: string) {

@@ -1,11 +1,10 @@
-import { resolve } from 'node:path'
 import { expect, test } from '@playwright/test'
 import { type ViteDevServer } from 'vite'
 
 import { startViteServer } from '../src/cli/vite-server'
+import { createBookSandbox, type BookSandbox } from './book-sandbox'
 
-const ROOT = resolve(__dirname, '../examples/sample-book')
-
+let sandbox: BookSandbox
 let server: ViteDevServer
 let baseURL: string
 
@@ -13,13 +12,15 @@ let baseURL: string
 // Playwright requires the fixtures arg be destructured even when unused
 // eslint-disable-next-line no-empty-pattern
 test.beforeAll(async ({}, testInfo) => {
+  sandbox = createBookSandbox()
   const port = 8199 + testInfo.workerIndex
-  server = await startViteServer(ROOT, port)
+  server = await startViteServer(sandbox.root, port)
   baseURL = `http://127.0.0.1:${port}`
 })
 
 test.afterAll(async () => {
   await server.close()
+  sandbox.cleanup()
 })
 
 test('a book stylesheet does not leak into the editor chrome', async ({ page }) => {
