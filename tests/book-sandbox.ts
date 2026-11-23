@@ -40,7 +40,7 @@ export function chapterPath(sandbox: BookSandbox, bookSlug: string, chapterFile:
 }
 
 // Cross-process mutex via atomic mkdir
-export async function acquireLock(name: string, timeoutMs = 120_000): Promise<() => void> {
+async function acquireLock(name: string, timeoutMs = 120_000): Promise<() => void> {
   mkdirSync(LOCKS_DIR, { recursive: true })
   const lockPath = join(LOCKS_DIR, name)
   const start = Date.now()
