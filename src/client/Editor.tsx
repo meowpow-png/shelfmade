@@ -97,8 +97,11 @@ export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
     const previous = activeChapterRef.current
 
     if (previous?.slug === selectedChapter.slug) {
-      // Same chapter with new content means an external edit diverged from baseline
-      if (selectedChapter.content === previous.lastSynced) return
+      // Frontmatter always wins silently
+      const fresh = splitFrontmatter(selectedChapter.content)
+      previous.frontmatter = fresh.frontmatter
+      if (fresh.body === splitFrontmatter(previous.lastSynced).body) return
+
       if (conflictStore.getSnapshot() === selectedChapter.content) return
       conflictStore.set(selectedChapter.content)
       return
