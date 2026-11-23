@@ -1,3 +1,6 @@
+import { existsSync, mkdirSync, rmSync } from 'node:fs'
+import { join } from 'node:path'
+
 import { expect, test } from './test'
 
 test('a fully unmigrated book gets sequential order written to disk', ({ fieldNotes }) => {
@@ -22,6 +25,21 @@ test('loading an already-backfilled book again rewrites nothing', ({ fieldNotes 
   const after = fieldNotes.files.map(fieldNotes.bytes)
 
   expect(after).toEqual(before)
+})
+
+test('loading fully ordered chapters does not wait on the backfill lock', ({ fieldNotes }) => {
+  fieldNotes.files.forEach((file, index) => fieldNotes.setOrder(file, index + 1))
+  const lockPath = join(fieldNotes.sandbox.root, 'books', 'field-notes', 'content', '.order.lock')
+  mkdirSync(lockPath)
+
+  try {
+    const book = fieldNotes.load()
+
+    expect(book.chapters.map((chapter) => chapter.order)).toEqual([1, 2, 3])
+    expect(existsSync(lockPath)).toBe(true)
+  } finally {
+    rmSync(lockPath, { recursive: true, force: true })
+  }
 })
 
 test('an explicit order is kept; order-less chapters append after it by filename', ({

@@ -107,10 +107,12 @@ function readChapters(
   components: Components,
   backfillOrder: boolean,
 ): Chapter[] {
-  // Locking only matters around the write the backfill below performs
-  return backfillOrder
-    ? withOrderLock(contentDir, () => readChaptersUnlocked(contentDir, components, true))
-    : readChaptersUnlocked(contentDir, components, false)
+  const chapters = readChaptersUnlocked(contentDir, components, false)
+  if (!backfillOrder || chapters.every((chapter) => typeof chapter.frontmatter.order === 'number'))
+    return chapters
+
+  // Re-read after locking so concurrent backfills see the latest orders.
+  return withOrderLock(contentDir, () => readChaptersUnlocked(contentDir, components, true))
 }
 
 function readChaptersUnlocked(
