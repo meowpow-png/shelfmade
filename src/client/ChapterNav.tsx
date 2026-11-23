@@ -37,11 +37,12 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
   }
 
   function createChapter() {
+    if (creating || renamingSlug !== undefined) return
     setCreating(true)
     fetch(`/books/${bookSlug}/chapters`, { method: 'POST' })
       .then((response) => response.json() as Promise<NavChapter>)
       .then((chapter) => {
-        store.set(chapter.slug)
+        // Deferred to commitRename/cancelRename to avoid stealing focus from the rename input
         setRenamingSlug(chapter.slug)
         setPendingChapter(chapter)
       })
@@ -49,9 +50,15 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
       .finally(() => setCreating(false))
   }
 
+  function cancelRename(chapterSlug: string) {
+    setRenamingSlug(undefined)
+    store.set(chapterSlug)
+  }
+
   // Empty title: skip the write, the default title created server-side is already on disk
   function commitRename(chapterSlug: string, title: string) {
     setRenamingSlug(undefined)
+    store.set(chapterSlug)
     const trimmed = title.trim()
     if (trimmed === '') return
 
@@ -73,7 +80,8 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
           type="button"
           className="chapter-nav-add"
           aria-label="Add chapter"
-          disabled={creating}
+          aria-disabled={creating || renamingSlug !== undefined}
+          onMouseDown={(event) => event.preventDefault()}
           onClick={createChapter}
         >
           +
@@ -104,7 +112,7 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
                   if (event.key === 'Enter') {
                     event.currentTarget.blur()
                   } else if (event.key === 'Escape') {
-                    setRenamingSlug(undefined)
+                    cancelRename(chapter.slug)
                   }
                 }}
                 onBlur={(event) => commitRename(chapter.slug, event.target.value)}
