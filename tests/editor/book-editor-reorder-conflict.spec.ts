@@ -1,25 +1,25 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 
+import { withOrder } from '../../src/engine/books'
 import { chapterPath, type BookSandbox } from '../book-sandbox'
 import { expect, test } from './test'
 
 // Tests share a mutable worker sandbox and must run in declaration order.
 test.describe.configure({ mode: 'serial' })
 
-function removeFieldNoteOrders(sandbox: BookSandbox) {
-  // The real content this copies from isn't guaranteed to be order-less or filename-ordered
-  for (const file of ['chapter-1.mdx', 'chapter-2.mdx', 'chapter-3.mdx']) {
+function seedFieldNoteOrders(sandbox: BookSandbox) {
+  for (const [index, file] of ['chapter-1.mdx', 'chapter-2.mdx', 'chapter-3.mdx'].entries()) {
     const path = chapterPath(sandbox, 'field-notes', file)
-    writeFileSync(path, readFileSync(path, 'utf-8').replace(/^order:.*\n/m, ''))
+    writeFileSync(path, withOrder(readFileSync(path, 'utf-8'), index + 1))
   }
 }
 
 test.use({
-  editorServerOptions: { portBase: 8799, prepareSandbox: removeFieldNoteOrders },
+  editorServerOptions: { portBase: 8799, prepareSandbox: seedFieldNoteOrders },
 })
 
-// Each test needs a filename-ordered baseline despite sharing a worker sandbox.
-test.beforeEach(async ({ sandbox }) => removeFieldNoteOrders(sandbox))
+// Each test needs the same baseline despite sharing a worker sandbox.
+test.beforeEach(async ({ sandbox }) => seedFieldNoteOrders(sandbox))
 
 test('reordering a sibling chapter never banners the chapter that is open', async ({
   chapter,
