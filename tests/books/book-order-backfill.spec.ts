@@ -136,6 +136,6 @@ test('backfill only touches the order line, leaving other frontmatter and body u
   await fieldNotes.load()
   const source = fieldNotes.source('chapter-1.mdx')
 
-  expect(source).toContain('title: Chapter One')
+  expect(source).toContain('title: "Chapter One"')
   expect(source).toContain('# The Harbour at Dawn')
 })

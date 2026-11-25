@@ -21,7 +21,7 @@ test.use({
 // Each test renames a different chapter to a distinct title, so none needs to undo another's
 function renameTitle(chapterFile: string, from: string, to: string) {
   const original = readFileSync(chapterFile, 'utf-8')
-  writeFileSync(chapterFile, original.replace(`title: ${from}`, `title: ${to}`))
+  writeFileSync(chapterFile, original.replace(`title: "${from}"`, `title: "${to}"`))
 }
 
 test('a frontmatter-only external change on the open chapter never banners', async ({
@@ -60,7 +60,7 @@ test('autosave after a frontmatter-only change writes the new frontmatter, not a
   await expect
     .poll(() => readFileSync(chapterFile, 'utf-8'))
     .toContain('Typed after an external frontmatter change.')
-  expect(readFileSync(chapterFile, 'utf-8')).toContain('title: Renamed Chapter Two')
+  expect(readFileSync(chapterFile, 'utf-8')).toContain('title: "Renamed Chapter Two"')
 })
 
 test('switching away from a chapter flushes with its refreshed frontmatter, not a stale copy', async ({
@@ -85,5 +85,5 @@ test('switching away from a chapter flushes with its refreshed frontmatter, not 
 
   const saved = readFileSync(chapterFile, 'utf-8')
   expect(saved).toContain('Pending edit before switching away.')
-  expect(saved).toContain('title: Renamed Chapter Three')
+  expect(saved).toContain('title: "Renamed Chapter Three"')
 })
