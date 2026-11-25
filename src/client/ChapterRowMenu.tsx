@@ -11,7 +11,8 @@ interface ChapterRowMenuProps {
 
 export function ChapterRowMenu({ title, disabled, onRename, onDelete }: ChapterRowMenuProps) {
   return (
-    <DropdownMenu.Root>
+    // Non-modal: an outside click shouldn't return focus to the trigger and re-reveal it
+    <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild disabled={disabled}>
         <button
           type="button"
