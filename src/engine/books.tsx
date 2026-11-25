@@ -106,9 +106,14 @@ export function withOrder(source: string, order: number): string {
   return `---\n${nextInner}\n---\n\n${source.slice(match[0].length)}`
 }
 
-// Quoted/escaped since a user-typed title, unlike order's number, can contain YAML-breaking characters
+// Picks the quote style needing fewer escapes, matching Prettier's own YAML choice for .mdx files
 export function withTitle(source: string, title: string): string {
-  const value = `"${title.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+  const doubleQuoteEscapes = (title.match(/["\\]/g) ?? []).length
+  const singleQuoteEscapes = (title.match(/'/g) ?? []).length
+  const value =
+    singleQuoteEscapes < doubleQuoteEscapes
+      ? `'${title.replace(/'/g, "''")}'`
+      : `"${title.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
   const match = source.match(FRONTMATTER_PATTERN)
   if (!match) return `---\ntitle: ${value}\n---\n\n${source}`
 
