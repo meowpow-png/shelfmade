@@ -213,7 +213,7 @@ function ChapterEditor({ slug, title, initialValue, onChange }: ChapterEditorPro
 
   useEffect(() => {
     const container = containerRef.current!
-    // Detach the outgoing chapter's dom without destroying its cached EditorView
+    // Clearing but not destroying avoids stacked DOM trees and keeps cursor/undo across switches
     while (container.firstChild) container.removeChild(container.firstChild)
 
     const views = getEditorViewCache()
