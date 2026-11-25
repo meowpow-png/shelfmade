@@ -110,6 +110,50 @@ body {
   height: 100%;
 }
 
+.activity-bar {
+  width: 64px;
+  height: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0;
+  background: var(--color-background);
+  border-right: 1px solid var(--color-divider);
+}
+
+.activity-bar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.activity-bar-icon:hover:not([aria-pressed='true']) {
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  color: var(--color-text-primary);
+}
+
+.activity-bar-icon[aria-pressed='true'] {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.activity-bar-icon-glyph {
+  display: inline-flex;
+}
+
+.activity-bar-icon-glyph svg {
+  width: 28px;
+  height: 28px;
+}
+
 .chapter-nav {
   width: 300px;
   height: 100%;

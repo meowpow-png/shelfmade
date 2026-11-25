@@ -1,7 +1,7 @@
 import { useState, useSyncExternalStore } from 'react'
 
-import { BookOpenIcon } from '@/client/BookOpenIcon'
 import type { EditorChapter } from '@/client/Editor'
+import { getNavCollapsedStore } from '@/client/nav-collapsed-store'
 import { getSelectedChapterStore } from '@/client/selected-chapter-store'
 
 type NavChapter = Pick<EditorChapter, 'slug' | 'title'>
@@ -12,6 +12,8 @@ interface ChapterNavProps {
 }
 
 export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
+  const collapsedStore = getNavCollapsedStore()
+  const collapsed = useSyncExternalStore(collapsedStore.subscribe, collapsedStore.getSnapshot)
   const store = getSelectedChapterStore()
   const storedSlug = useSyncExternalStore(store.subscribe, store.getSnapshot)
   const [draggedSlug, setDraggedSlug] = useState<string>()
@@ -20,6 +22,8 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
   const [pendingChapter, setPendingChapter] = useState<NavChapter>()
   // Chapters as of creation; the placeholder stops trusting itself on the next update, matched or not
   const [pendingBaseChapters, setPendingBaseChapters] = useState(chapters)
+
+  if (collapsed) return null
 
   const displayChapters: NavChapter[] =
     pendingChapter && chapters === pendingBaseChapters ? [...chapters, pendingChapter] : chapters
@@ -74,7 +78,6 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
   return (
     <nav className="chapter-nav">
       <div className="chapter-nav-header">
-        <BookOpenIcon className="chapter-nav-icon" />
         <span className="chapter-nav-title">Chapters</span>
         <button
           type="button"
