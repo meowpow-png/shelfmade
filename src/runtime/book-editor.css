@@ -244,7 +244,9 @@ body {
   transition: background-color 0.1s ease;
 }
 
-.chapter-nav-item:hover:not([aria-current='true']) {
+/* :has() keeps the highlight once the mouse leaves for the portal-rendered open menu */
+.chapter-nav-row:hover .chapter-nav-item:not([aria-current='true']),
+.chapter-nav-row:has(.chapter-nav-menu-trigger[data-state='open']) .chapter-nav-item:not([aria-current='true']) {
   background: color-mix(in srgb, var(--color-surface) 60%, transparent);
 }
 
