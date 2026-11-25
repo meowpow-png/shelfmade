@@ -23,13 +23,19 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
   // Create-chapter's rename always selects the new chapter; menu-triggered rename must not
   const [renameSelects, setRenameSelects] = useState(true)
   const [pendingChapter, setPendingChapter] = useState<NavChapter>()
-  // Chapters as of creation; the placeholder stops trusting itself on the next update, matched or not
+  // Chapters as of the last create/rename; the placeholder stops trusting itself on the next update
   const [pendingBaseChapters, setPendingBaseChapters] = useState(chapters)
 
   if (collapsed) return null
 
   const displayChapters: NavChapter[] =
-    pendingChapter && chapters === pendingBaseChapters ? [...chapters, pendingChapter] : chapters
+    pendingChapter && chapters === pendingBaseChapters
+      ? chapters.some((existing) => existing.slug === pendingChapter.slug)
+        ? chapters.map((existing) =>
+            existing.slug === pendingChapter.slug ? pendingChapter : existing,
+          )
+        : [...chapters, pendingChapter]
+      : chapters
   const selectedSlug = storedSlug ?? displayChapters[0]?.slug
 
   // targetIndex is the drop target's current index, before the dragged chapter is removed
@@ -70,9 +76,8 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
     const trimmed = title.trim()
     if (trimmed === '') return
 
-    setPendingChapter((current) =>
-      current?.slug === chapterSlug ? { ...current, title: trimmed } : current,
-    )
+    setPendingBaseChapters(chapters)
+    setPendingChapter({ slug: chapterSlug, title: trimmed })
     fetch(`/books/${bookSlug}/chapters/${chapterSlug}/title`, {
       method: 'PUT',
       body: trimmed,
