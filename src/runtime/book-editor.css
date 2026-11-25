@@ -133,6 +133,11 @@ body {
   background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
+  outline: none;
+}
+
+.activity-bar-icon:focus-visible {
+  box-shadow: var(--focus-ring);
 }
 
 .activity-bar-icon:hover:not([aria-pressed='true']) {
@@ -207,6 +212,11 @@ body {
   font-size: 28px;
   line-height: 1;
   cursor: pointer;
+  outline: none;
+}
+
+.chapter-nav-add:focus-visible {
+  box-shadow: var(--focus-ring);
 }
 
 .chapter-nav-add[aria-disabled='true'] {
@@ -241,7 +251,12 @@ body {
   line-height: 1.4;
   text-align: left;
   cursor: pointer;
+  outline: none;
   transition: background-color 0.1s ease;
+}
+
+.chapter-nav-item:focus-visible {
+  box-shadow: var(--focus-ring);
 }
 
 /* :has() keeps the highlight once the mouse leaves for the portal-rendered open menu */
@@ -263,7 +278,7 @@ body {
 .chapter-nav-rename {
   background: var(--color-surface);
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-info);
+  box-shadow: var(--focus-ring);
 }
 
 .chapter-nav-menu-trigger {
@@ -293,6 +308,10 @@ body {
 
 .chapter-nav-menu-trigger:disabled {
   cursor: default;
+}
+
+.chapter-nav-menu-trigger:focus-visible {
+  box-shadow: var(--focus-ring);
 }
 
 /* Selection alone must not reveal the dots, and a disabled trigger never reveals at all */
