@@ -224,10 +224,14 @@ body {
   list-style: none;
 }
 
+.chapter-nav-row {
+  position: relative;
+}
+
 .chapter-nav-item {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
+  padding: 10px 36px 10px 12px;
   border: none;
   border-radius: 8px;
   background: transparent;
@@ -257,4 +261,71 @@ body {
   background: var(--color-surface);
   outline: none;
   box-shadow: 0 0 0 2px var(--color-info);
+}
+
+.chapter-nav-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.chapter-nav-menu-trigger:hover,
+.chapter-nav-menu-trigger[data-state='open'] {
+  background: var(--color-divider);
+  color: var(--color-text-primary);
+}
+
+.chapter-nav-menu-trigger:disabled {
+  cursor: default;
+  opacity: 0.3;
+  background: transparent;
+}
+
+/* Selection alone must not reveal the dots; only hover, open menu, or keyboard focus do */
+.chapter-nav-menu-trigger:focus-visible,
+.chapter-nav-menu-trigger[data-state='open'],
+.chapter-nav-row:hover .chapter-nav-menu-trigger {
+  opacity: 1;
+}
+
+.chapter-nav-menu-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.chapter-nav-menu-content {
+  min-width: 140px;
+  padding: 4px;
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  background: var(--color-background);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+  font-family: var(--font-sans);
+}
+
+.chapter-nav-menu-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+  outline: none;
+}
+
+.chapter-nav-menu-item[data-highlighted] {
+  background: var(--color-surface);
 }

@@ -1,5 +1,6 @@
 import { useState, useSyncExternalStore } from 'react'
 
+import { ChapterRowMenu } from '@/client/ChapterRowMenu'
 import type { EditorChapter } from '@/client/Editor'
 import { getNavCollapsedStore } from '@/client/nav-collapsed-store'
 import { getSelectedChapterStore } from '@/client/selected-chapter-store'
@@ -95,7 +96,7 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
           <li
             key={chapter.slug}
             draggable
-            className={chapter.slug === draggedSlug ? 'chapter-nav-dragging' : undefined}
+            className={`chapter-nav-row${chapter.slug === draggedSlug ? ' chapter-nav-dragging' : ''}`}
             onDragStart={() => setDraggedSlug(chapter.slug)}
             onDragEnd={() => setDraggedSlug(undefined)}
             onDragOver={(event) => event.preventDefault()}
@@ -121,14 +122,22 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
                 onBlur={(event) => commitRename(chapter.slug, event.target.value)}
               />
             ) : (
-              <button
-                type="button"
-                className="chapter-nav-item"
-                aria-current={chapter.slug === selectedSlug}
-                onClick={() => store.set(chapter.slug)}
-              >
-                {chapter.title}
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="chapter-nav-item"
+                  aria-current={chapter.slug === selectedSlug}
+                  onClick={() => store.set(chapter.slug)}
+                >
+                  {chapter.title}
+                </button>
+                <ChapterRowMenu
+                  title={chapter.title}
+                  disabled={false}
+                  onRename={() => {}}
+                  onDelete={() => {}}
+                />
+              </>
             )}
           </li>
         ))}
