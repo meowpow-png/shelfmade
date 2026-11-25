@@ -71,7 +71,7 @@ export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
   )
   const selectedChapter = chapters.find((chapter) => chapter.slug === selectedSlug) ?? chapters[0]
 
-  // Pins a default selection and recovers it if the selected chapter stops existing
+  // Pinned by slug, not position, so a reorder can't silently swap which chapter is shown
   useEffect(() => {
     const fallback = chapters[0]
     if (fallback && !chapters.some((chapter) => chapter.slug === selectedSlug)) {
