@@ -349,3 +349,82 @@ body {
 .chapter-nav-menu-item[data-highlighted] {
   background: var(--color-surface);
 }
+
+.chapter-delete-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+}
+
+.chapter-delete-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: 8px;
+  background: var(--color-background);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+  font-family: var(--font-sans);
+  transform: translate(-50%, -50%);
+
+  /* Holds focus on open instead of Cancel, so it must not show its own ring */
+  outline: none;
+}
+
+.chapter-delete-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.chapter-delete-description {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.chapter-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.chapter-delete-cancel,
+.chapter-delete-confirm {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.chapter-delete-cancel {
+  background: color-mix(in srgb, var(--color-surface) 80%, var(--color-background));
+  color: var(--color-text-primary);
+}
+
+.chapter-delete-cancel:hover {
+  background: color-mix(in srgb, var(--color-surface) 90%, black);
+}
+
+.chapter-delete-confirm {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.chapter-delete-confirm:hover {
+  background: color-mix(in srgb, var(--color-danger) 85%, black);
+}
+
+.chapter-delete-cancel:focus-visible,
+.chapter-delete-confirm:focus-visible {
+  box-shadow: var(--focus-ring);
+}

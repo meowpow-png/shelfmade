@@ -1,4 +1,11 @@
-import { createReadStream, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  createReadStream,
+  existsSync,
+  readdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { type IncomingMessage, type ServerResponse } from 'node:http'
 import { dirname, extname, join, resolve } from 'node:path'
 import mdx from '@mdx-js/rollup'
@@ -285,6 +292,23 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
 
   server.middlewares.use((request, response, next) => {
     const match =
+      request.method === 'DELETE'
+        ? /^\/books\/([^/]+)\/chapters\/([^/]+)$/.exec(request.url ?? '')
+        : null
+    const [, slug, chapterSlug] = match ?? []
+
+    if (slug === undefined || chapterSlug === undefined) {
+      next()
+      return
+    }
+
+    deleteChapter(server, root, slug, chapterSlug, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  server.middlewares.use((request, response, next) => {
+    const match =
       request.method === 'PUT'
         ? /^\/books\/([^/]+)\/chapters\/([^/]+)\/order$/.exec(request.url ?? '')
         : null
@@ -398,6 +422,43 @@ async function saveChapter(
 
   const content = await readRequestBody(request)
   writeFileSync(chapter.path, content)
+  response.statusCode = 204
+  response.end()
+}
+
+async function deleteChapter(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  chapterSlug: string,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+  const chapter = book?.chapters.find((candidate) => candidate.slug === chapterSlug)
+
+  if (!book || !chapter) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  const contentDir = dirname(chapter.path)
+  await withOrderLock(contentDir, () => {
+    unlinkSync(chapter.path)
+
+    // This route only ever runs via the dev server, which always backfills order
+    const remaining = book.chapters
+      .filter((candidate) => candidate.slug !== chapterSlug)
+      .sort((a, b) => a.order! - b.order!)
+
+    remaining.forEach((candidate, index) => {
+      const newOrder = index + 1
+      if (candidate.order === newOrder) return
+      writeFileSync(candidate.path, withOrder(readFileSync(candidate.path, 'utf-8'), newOrder))
+    })
+  })
+
   response.statusCode = 204
   response.end()
 }

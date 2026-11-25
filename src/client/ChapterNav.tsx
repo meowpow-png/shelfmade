@@ -1,7 +1,8 @@
 import { useState, useSyncExternalStore } from 'react'
 
+import { ChapterDeleteDialog } from '@/client/ChapterDeleteDialog'
 import { ChapterRowMenu } from '@/client/ChapterRowMenu'
-import type { EditorChapter } from '@/client/Editor'
+import { discardEditorView, type EditorChapter } from '@/client/Editor'
 import { getNavCollapsedStore } from '@/client/nav-collapsed-store'
 import { getSelectedChapterStore } from '@/client/selected-chapter-store'
 
@@ -25,18 +26,28 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
   const [pendingChapter, setPendingChapter] = useState<NavChapter>()
   // Chapters as of the last create/rename; the placeholder stops trusting itself on the next update
   const [pendingBaseChapters, setPendingBaseChapters] = useState(chapters)
+  const [deleteCandidateSlug, setDeleteCandidateSlug] = useState<string>()
+  const [pendingDeleteSlug, setPendingDeleteSlug] = useState<string>()
+  // Same self-distrust trick as pendingBaseChapters, scoped to the delete optimistic update
+  const [pendingDeleteBaseChapters, setPendingDeleteBaseChapters] = useState(chapters)
 
   if (collapsed) return null
 
+  const baseChapters =
+    pendingDeleteSlug !== undefined && chapters === pendingDeleteBaseChapters
+      ? chapters.filter((chapter) => chapter.slug !== pendingDeleteSlug)
+      : chapters
+
   const displayChapters: NavChapter[] =
     pendingChapter && chapters === pendingBaseChapters
-      ? chapters.some((existing) => existing.slug === pendingChapter.slug)
-        ? chapters.map((existing) =>
+      ? baseChapters.some((existing) => existing.slug === pendingChapter.slug)
+        ? baseChapters.map((existing) =>
             existing.slug === pendingChapter.slug ? pendingChapter : existing,
           )
-        : [...chapters, pendingChapter]
-      : chapters
+        : [...baseChapters, pendingChapter]
+      : baseChapters
   const selectedSlug = storedSlug ?? displayChapters[0]?.slug
+  const deleteCandidate = displayChapters.find((chapter) => chapter.slug === deleteCandidateSlug)
 
   // targetIndex is the drop target's current index, before the dragged chapter is removed
   function moveChapter(chapterSlug: string, targetIndex: number) {
@@ -84,79 +95,108 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
     }).catch((error: unknown) => console.error(`Failed to rename chapter "${chapterSlug}":`, error))
   }
 
-  return (
-    <nav className="chapter-nav">
-      <div className="chapter-nav-header">
-        <span className="chapter-nav-title">Chapters</span>
-        <button
-          type="button"
-          className="chapter-nav-add"
-          aria-label="Add chapter"
-          aria-disabled={creating || renamingSlug !== undefined}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={createChapter}
-        >
-          +
-        </button>
-      </div>
-      <ul className="chapter-nav-list">
-        {displayChapters.map((chapter, index) => {
-          const menuDisabled = creating || renamingSlug !== undefined
+  function confirmDelete(chapterSlug: string) {
+    setDeleteCandidateSlug(undefined)
+    setPendingDeleteBaseChapters(chapters)
+    setPendingDeleteSlug(chapterSlug)
 
-          return (
-            <li
-              key={chapter.slug}
-              draggable
-              className={`chapter-nav-row${chapter.slug === draggedSlug ? ' chapter-nav-dragging' : ''}`}
-              onDragStart={() => setDraggedSlug(chapter.slug)}
-              onDragEnd={() => setDraggedSlug(undefined)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                event.preventDefault()
-                if (draggedSlug && draggedSlug !== chapter.slug) moveChapter(draggedSlug, index)
-              }}
-            >
-              {chapter.slug === renamingSlug ? (
-                <input
-                  type="text"
-                  className="chapter-nav-item chapter-nav-rename"
-                  defaultValue={chapter.title}
-                  autoFocus
-                  onFocus={(event) => event.currentTarget.select()}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.currentTarget.blur()
-                    } else if (event.key === 'Escape') {
-                      cancelRename(chapter.slug)
-                    }
-                  }}
-                  onBlur={(event) => commitRename(chapter.slug, event.target.value)}
-                />
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="chapter-nav-item"
-                    aria-current={chapter.slug === selectedSlug}
-                    onClick={() => store.set(chapter.slug)}
-                  >
-                    {chapter.title}
-                  </button>
-                  <ChapterRowMenu
-                    title={chapter.title}
-                    disabled={menuDisabled}
-                    onRename={() => {
-                      setRenameSelects(false)
-                      setRenamingSlug(chapter.slug)
+    if (chapterSlug === selectedSlug) {
+      // Previous chapter in order, or the new first if the deleted one was first
+      const index = displayChapters.findIndex((chapter) => chapter.slug === chapterSlug)
+      const remaining = displayChapters.filter((chapter) => chapter.slug !== chapterSlug)
+      const fallback = remaining[index - 1] ?? remaining[0]
+      if (fallback) store.set(fallback.slug)
+    }
+    discardEditorView(chapterSlug)
+
+    fetch(`/books/${bookSlug}/chapters/${chapterSlug}`, { method: 'DELETE' }).catch(
+      (error: unknown) => console.error(`Failed to delete chapter "${chapterSlug}":`, error),
+    )
+  }
+
+  return (
+    <>
+      <nav className="chapter-nav">
+        <div className="chapter-nav-header">
+          <span className="chapter-nav-title">Chapters</span>
+          <button
+            type="button"
+            className="chapter-nav-add"
+            aria-label="Add chapter"
+            aria-disabled={creating || renamingSlug !== undefined}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={createChapter}
+          >
+            +
+          </button>
+        </div>
+        <ul className="chapter-nav-list">
+          {displayChapters.map((chapter, index) => {
+            const menuDisabled = creating || renamingSlug !== undefined
+
+            return (
+              <li
+                key={chapter.slug}
+                draggable
+                className={`chapter-nav-row${chapter.slug === draggedSlug ? ' chapter-nav-dragging' : ''}`}
+                onDragStart={() => setDraggedSlug(chapter.slug)}
+                onDragEnd={() => setDraggedSlug(undefined)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  if (draggedSlug && draggedSlug !== chapter.slug) moveChapter(draggedSlug, index)
+                }}
+              >
+                {chapter.slug === renamingSlug ? (
+                  <input
+                    type="text"
+                    className="chapter-nav-item chapter-nav-rename"
+                    defaultValue={chapter.title}
+                    autoFocus
+                    onFocus={(event) => event.currentTarget.select()}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.currentTarget.blur()
+                      } else if (event.key === 'Escape') {
+                        cancelRename(chapter.slug)
+                      }
                     }}
-                    onDelete={() => {}}
+                    onBlur={(event) => commitRename(chapter.slug, event.target.value)}
                   />
-                </>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </nav>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="chapter-nav-item"
+                      aria-current={chapter.slug === selectedSlug}
+                      onClick={() => store.set(chapter.slug)}
+                    >
+                      {chapter.title}
+                    </button>
+                    <ChapterRowMenu
+                      title={chapter.title}
+                      disabled={menuDisabled}
+                      onRename={() => {
+                        setRenameSelects(false)
+                        setRenamingSlug(chapter.slug)
+                      }}
+                      onDelete={() => setDeleteCandidateSlug(chapter.slug)}
+                    />
+                  </>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+      <ChapterDeleteDialog
+        open={deleteCandidate !== undefined}
+        title={deleteCandidate?.title ?? ''}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCandidateSlug(undefined)
+        }}
+        onConfirm={() => deleteCandidate && confirmDelete(deleteCandidate.slug)}
+      />
+    </>
   )
 }

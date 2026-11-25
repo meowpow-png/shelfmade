@@ -38,6 +38,13 @@ function getEditorViewCache(): Map<string, EditorView> {
   return (moduleEditorViews ??= new Map())
 }
 
+// Called on chapter delete - nothing else ever removes a slug from the cache
+export function discardEditorView(slug: string) {
+  const views = getEditorViewCache()
+  views.get(slug)?.destroy()
+  views.delete(slug)
+}
+
 // Bridges state into React: useRef can't be read at render, useState can't be set in an effect.
 function createConflictStore() {
   // The selected chapter's conflicting disk content; undefined if none
@@ -120,6 +127,7 @@ export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
     if (previous && saveTimerRef.current !== undefined) {
       clearTimeout(saveTimerRef.current)
       saveTimerRef.current = undefined
+      // Already discarded (and undefined) if previous was just deleted - nothing to flush
       const view = getEditorViewCache().get(previous.slug)
       if (view) saveChapterNow(previous.slug, previous.frontmatter + view.state.doc.toString())
     }
