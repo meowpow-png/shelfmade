@@ -45,6 +45,7 @@ test('autosave after a frontmatter-only change writes the new frontmatter, not a
   page,
   sandbox,
   selectChapter,
+  typeInContent,
 }) => {
   await openBook('field-notes')
   await selectChapter('Chapter Two')
@@ -54,9 +55,7 @@ test('autosave after a frontmatter-only change writes the new frontmatter, not a
   await expect(page.locator('.editor-chapter-title')).toHaveText('Renamed Chapter Two')
   await expect(page.locator('.editor-conflict-banner')).toHaveCount(0)
 
-  await page.locator('.cm-content').click()
-  await page.keyboard.press('Control+Home')
-  await page.keyboard.type('Typed after an external frontmatter change. ')
+  await typeInContent(page, 'Typed after an external frontmatter change. ')
 
   await expect
     .poll(() => readFileSync(chapterFile, 'utf-8'))
@@ -69,13 +68,12 @@ test('switching away from a chapter flushes with its refreshed frontmatter, not 
   page,
   sandbox,
   selectChapter,
+  typeInContent,
 }) => {
   await openBook('field-notes')
   await selectChapter('Chapter Three')
 
-  await page.locator('.cm-content').click()
-  await page.keyboard.press('Control+Home')
-  await page.keyboard.type('Pending edit before switching away. ')
+  await typeInContent(page, 'Pending edit before switching away. ')
 
   const chapterFile = chapterPath(sandbox, 'field-notes', 'chapter-3.mdx')
   renameTitle(chapterFile, 'Chapter Three', 'Renamed Chapter Three')

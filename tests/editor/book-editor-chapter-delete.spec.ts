@@ -30,14 +30,13 @@ test('deleting the open chapter with an unsaved edit does not resurrect the file
   openBook,
   page,
   sandbox,
+  typeInContent,
 }) => {
   await openBook('good-dog-mom')
 
   // "Reading Her Signals" is selected by default
   const selectedChapter = chapter('Reading Her Signals')
-  await selectedChapter.locator('.cm-content').click()
-  await page.keyboard.press('Control+Home')
-  await page.keyboard.type('Unsaved edit that must not resurrect the file. ')
+  await typeInContent(selectedChapter, 'Unsaved edit that must not resurrect the file. ')
 
   const chapterFile = chapterPath(sandbox, 'good-dog-mom', '1-reading-her-signals.mdx')
   unlinkSync(chapterFile)

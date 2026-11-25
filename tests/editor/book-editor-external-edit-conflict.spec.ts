@@ -31,18 +31,15 @@ test('an external edit to a clean chapter shows the banner and leaves the pane u
 test('an external edit to a dirty chapter shows the banner and keeps local edits', async ({
   chapter,
   openBook,
-  page,
   sandbox,
   selectChapter,
+  typeInContent,
 }) => {
   await openBook('field-notes')
   await selectChapter('Chapter Two')
 
   const selectedChapter = chapter('Chapter Two')
-  await selectedChapter.locator('.cm-content').click()
-  // Move cursor to doc-start so typing never lands inside a tag
-  await page.keyboard.press('Control+Home')
-  await page.keyboard.type('Local edit that must survive.')
+  await typeInContent(selectedChapter, 'Local edit that must survive.')
   const paneBefore = await selectedChapter.locator('.cm-content').innerText()
 
   const chapterFile = chapterPath(sandbox, 'field-notes', 'chapter-2.mdx')
@@ -81,8 +78,8 @@ test('"Load external changes" loads disk content and clears the banner', async (
 test('autosave is not paused while a banner is showing', async ({
   chapter,
   openBook,
-  page,
   sandbox,
+  typeInContent,
 }) => {
   await openBook('good-dog-mom')
 
@@ -95,9 +92,7 @@ test('autosave is not paused while a banner is showing', async ({
 
   await expect(selectedChapter.locator('.editor-conflict-banner')).toBeVisible()
 
-  await selectedChapter.locator('.cm-content').click()
-  await page.keyboard.press('Control+Home')
-  await page.keyboard.type('Still typing through the conflict. ')
+  await typeInContent(selectedChapter, 'Still typing through the conflict. ')
 
   await expect
     .poll(() => readFileSync(chapterFile, 'utf-8'))
@@ -110,6 +105,7 @@ test('an external edit to a hidden chapter never banners, and is silently overwr
   page,
   sandbox,
   selectChapter,
+  typeInContent,
 }) => {
   await openBook('good-dog-mom')
 
@@ -128,9 +124,7 @@ test('an external edit to a hidden chapter never banners, and is silently overwr
   await selectChapter('Becoming Her Secure Base')
   await expect(page.locator('.editor-conflict-banner')).toHaveCount(0)
 
-  await chapter('Becoming Her Secure Base').locator('.cm-content').click()
-  await page.keyboard.press('Control+Home')
-  await page.keyboard.type('Overwriting from the editor. ')
+  await typeInContent(chapter('Becoming Her Secure Base'), 'Overwriting from the editor. ')
 
   await expect
     .poll(() => readFileSync(chapterFile, 'utf-8'))

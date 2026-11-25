@@ -1,4 +1,4 @@
-import { expect, test as base, type Locator } from '@playwright/test'
+import { expect, test as base, type Locator, type Page } from '@playwright/test'
 import { type ViteDevServer } from 'vite'
 
 import { startViteServer } from '../../src/cli/vite-server'
@@ -18,11 +18,13 @@ interface EditorServer {
 type OpenBook = (slug: string) => Promise<void>
 type Chapter = (title: string) => Locator
 type SelectChapter = (title: string) => Promise<void>
+type TypeInContent = (scope: Locator | Page, text: string) => Promise<void>
 
 interface EditorFixtures {
   chapter: Chapter
   openBook: OpenBook
   selectChapter: SelectChapter
+  typeInContent: TypeInContent
 }
 
 interface EditorWorkerFixtures {
@@ -85,6 +87,15 @@ export const test = base.extend<EditorFixtures, EditorWorkerFixtures>({
     await provide(async (title) => {
       await page.getByRole('button', { name: title, exact: true }).click()
       await expect(chapter(title)).toBeVisible()
+    })
+  },
+  typeInContent: async ({ page }, provide) => {
+    await provide(async (scope, text) => {
+      await scope.locator('.cm-content').click()
+      // Click position is unreliable and can land mid-tag;
+      // Control+Home forces a safe insertion point.
+      await page.keyboard.press('Control+Home')
+      await page.keyboard.type(text)
     })
   },
 })
