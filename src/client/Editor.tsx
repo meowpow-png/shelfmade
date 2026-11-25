@@ -107,7 +107,7 @@ export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
     const previous = activeChapterRef.current
 
     if (previous?.slug === selectedChapter.slug) {
-      // Frontmatter always wins silently
+      // Refreshed from disk on every flush, or a stale cache would silently undo a concurrent reorder
       const fresh = splitFrontmatter(selectedChapter.content)
       previous.frontmatter = fresh.frontmatter
       if (fresh.body === splitFrontmatter(previous.lastSynced).body) return
