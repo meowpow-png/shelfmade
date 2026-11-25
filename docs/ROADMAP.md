@@ -16,17 +16,6 @@
 
 You can go from an idea to a print-ready PDF without leaving the terminal.
 
-### Proven on a real book
-
-**Steps:**
-
-- [ ] Publish a real title end-to-end through Shelfmade
-- [ ] Confirm the exported PDF matches the book's previous output
-
-**Done when:**
-
-A real book has shipped through Shelfmade, with the same page count and breaks as before.
-
 ### Public release
 
 **Steps:**
