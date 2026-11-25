@@ -281,25 +281,23 @@ body {
   color: var(--color-text-secondary);
   cursor: pointer;
   opacity: 0;
+  outline: none;
   transition: opacity 0.1s ease;
 }
 
 .chapter-nav-menu-trigger:hover,
 .chapter-nav-menu-trigger[data-state='open'] {
-  background: var(--color-divider);
   color: var(--color-text-primary);
 }
 
 .chapter-nav-menu-trigger:disabled {
   cursor: default;
-  opacity: 0.3;
-  background: transparent;
 }
 
-/* Selection alone must not reveal the dots; only hover, open menu, or keyboard focus do */
+/* Selection alone must not reveal the dots, and a disabled trigger never reveals at all */
 .chapter-nav-menu-trigger:focus-visible,
 .chapter-nav-menu-trigger[data-state='open'],
-.chapter-nav-row:hover .chapter-nav-menu-trigger {
+.chapter-nav-row:hover .chapter-nav-menu-trigger:not(:disabled) {
   opacity: 1;
 }
 
