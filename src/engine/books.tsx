@@ -148,6 +148,8 @@ function readChaptersUnlocked(
       const chapterFrontmatter = (frontmatter ?? {}) as Chapter['frontmatter']
       return {
         path,
+        // Renaming this on reorder would break
+        // the CM6 cache, save route, and disk path mid-edit
         slug: basename(file, '.mdx'),
         frontmatter: chapterFrontmatter,
         source,
