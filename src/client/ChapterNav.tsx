@@ -20,6 +20,8 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
   const [draggedSlug, setDraggedSlug] = useState<string>()
   const [creating, setCreating] = useState(false)
   const [renamingSlug, setRenamingSlug] = useState<string>()
+  // Create-chapter's rename always selects the new chapter; menu-triggered rename must not
+  const [renameSelects, setRenameSelects] = useState(true)
   const [pendingChapter, setPendingChapter] = useState<NavChapter>()
   // Chapters as of creation; the placeholder stops trusting itself on the next update, matched or not
   const [pendingBaseChapters, setPendingBaseChapters] = useState(chapters)
@@ -49,6 +51,7 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
         setPendingBaseChapters(chapters)
         // Deferred to commitRename/cancelRename to avoid stealing focus from the rename input
         setRenamingSlug(chapter.slug)
+        setRenameSelects(true)
         setPendingChapter(chapter)
       })
       .catch((error: unknown) => console.error('Failed to create chapter:', error))
@@ -57,13 +60,13 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
 
   function cancelRename(chapterSlug: string) {
     setRenamingSlug(undefined)
-    store.set(chapterSlug)
+    if (renameSelects) store.set(chapterSlug)
   }
 
   // Empty title: skip the write, the default title created server-side is already on disk
   function commitRename(chapterSlug: string, title: string) {
     setRenamingSlug(undefined)
-    store.set(chapterSlug)
+    if (renameSelects) store.set(chapterSlug)
     const trimmed = title.trim()
     if (trimmed === '') return
 
@@ -92,55 +95,62 @@ export function ChapterNav({ chapters, bookSlug }: ChapterNavProps) {
         </button>
       </div>
       <ul className="chapter-nav-list">
-        {displayChapters.map((chapter, index) => (
-          <li
-            key={chapter.slug}
-            draggable
-            className={`chapter-nav-row${chapter.slug === draggedSlug ? ' chapter-nav-dragging' : ''}`}
-            onDragStart={() => setDraggedSlug(chapter.slug)}
-            onDragEnd={() => setDraggedSlug(undefined)}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault()
-              if (draggedSlug && draggedSlug !== chapter.slug) moveChapter(draggedSlug, index)
-            }}
-          >
-            {chapter.slug === renamingSlug ? (
-              <input
-                type="text"
-                className="chapter-nav-item chapter-nav-rename"
-                defaultValue={chapter.title}
-                autoFocus
-                onFocus={(event) => event.currentTarget.select()}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.currentTarget.blur()
-                  } else if (event.key === 'Escape') {
-                    cancelRename(chapter.slug)
-                  }
-                }}
-                onBlur={(event) => commitRename(chapter.slug, event.target.value)}
-              />
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="chapter-nav-item"
-                  aria-current={chapter.slug === selectedSlug}
-                  onClick={() => store.set(chapter.slug)}
-                >
-                  {chapter.title}
-                </button>
-                <ChapterRowMenu
-                  title={chapter.title}
-                  disabled={false}
-                  onRename={() => {}}
-                  onDelete={() => {}}
+        {displayChapters.map((chapter, index) => {
+          const menuDisabled = creating || renamingSlug !== undefined
+
+          return (
+            <li
+              key={chapter.slug}
+              draggable
+              className={`chapter-nav-row${chapter.slug === draggedSlug ? ' chapter-nav-dragging' : ''}`}
+              onDragStart={() => setDraggedSlug(chapter.slug)}
+              onDragEnd={() => setDraggedSlug(undefined)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault()
+                if (draggedSlug && draggedSlug !== chapter.slug) moveChapter(draggedSlug, index)
+              }}
+            >
+              {chapter.slug === renamingSlug ? (
+                <input
+                  type="text"
+                  className="chapter-nav-item chapter-nav-rename"
+                  defaultValue={chapter.title}
+                  autoFocus
+                  onFocus={(event) => event.currentTarget.select()}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.currentTarget.blur()
+                    } else if (event.key === 'Escape') {
+                      cancelRename(chapter.slug)
+                    }
+                  }}
+                  onBlur={(event) => commitRename(chapter.slug, event.target.value)}
                 />
-              </>
-            )}
-          </li>
-        ))}
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="chapter-nav-item"
+                    aria-current={chapter.slug === selectedSlug}
+                    onClick={() => store.set(chapter.slug)}
+                  >
+                    {chapter.title}
+                  </button>
+                  <ChapterRowMenu
+                    title={chapter.title}
+                    disabled={menuDisabled}
+                    onRename={() => {
+                      setRenameSelects(false)
+                      setRenamingSlug(chapter.slug)
+                    }}
+                    onDelete={() => {}}
+                  />
+                </>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </nav>
   )
