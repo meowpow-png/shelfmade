@@ -321,6 +321,10 @@ body {
   opacity: 1;
 }
 
+.chapter-nav-menu-icon {
+  display: inline-flex;
+}
+
 .chapter-nav-menu-icon svg {
   width: 18px;
   height: 18px;
