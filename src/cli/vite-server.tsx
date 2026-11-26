@@ -446,6 +446,8 @@ async function deleteChapter(
   const contentDir = dirname(chapter.path)
   await withOrderLock(contentDir, () => {
     unlinkSync(chapter.path)
+    // Front-run chokidar's async pickup so HMR invalidation can't race a later navigation
+    server.watcher.emit('unlink', chapter.path)
 
     // This route only ever runs via the dev server, which always backfills order
     const remaining = book.chapters
