@@ -1,6 +1,7 @@
 import {
   createReadStream,
   existsSync,
+  mkdirSync,
   readdirSync,
   readFileSync,
   unlinkSync,
@@ -14,6 +15,7 @@ import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { createServer, type Plugin, type ViteDevServer } from 'vite'
 
+import { slugify } from '@/cli/init'
 import { resolveBooksViaVite, withOrder, withOrderLock, withTitle } from '@/engine/books'
 import { renderDocument, renderTopbar } from '@/engine/document'
 import { PAGED_POLYFILL, RUNTIME_DIR } from '@/engine/render'
@@ -356,6 +358,17 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     )
   })
 
+  server.middlewares.use((request, response, next) => {
+    if (request.method !== 'POST' || request.url !== '/books') {
+      next()
+      return
+    }
+
+    createBook(root, request, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
   await server.listen()
   server.printUrls()
 
@@ -565,6 +578,33 @@ async function createChapter(
   response.statusCode = 201
   response.setHeader('Content-Type', 'application/json')
   response.end(JSON.stringify(chapter))
+}
+
+async function createBook(root: string, request: IncomingMessage, response: ServerResponse) {
+  const title = await readRequestBody(request)
+  const booksDir = resolve(root, 'books')
+  const slug = uniqueBookSlug(booksDir, slugify(title))
+  const contentDir = join(booksDir, slug, 'content')
+
+  mkdirSync(contentDir, { recursive: true })
+  writeFileSync(join(booksDir, slug, 'book.json'), `${JSON.stringify({ title }, null, 2)}\n`)
+  writeFileSync(
+    join(contentDir, 'chapter-1.mdx'),
+    withTitle(withOrder('', 1), DEFAULT_CHAPTER_TITLE),
+  )
+
+  response.statusCode = 201
+  response.setHeader('Content-Type', 'application/json')
+  response.end(JSON.stringify({ slug, title }))
+}
+
+// Appends -2, -3, ... on a collision, mirroring how a filesystem would never silently overwrite
+function uniqueBookSlug(booksDir: string, base: string): string {
+  if (!existsSync(join(booksDir, base))) return base
+
+  let suffix = 2
+  while (existsSync(join(booksDir, `${base}-${suffix}`))) suffix++
+  return `${base}-${suffix}`
 }
 
 // Remembers indices used per content dir so a deleted chapter's path is never reused mid-process

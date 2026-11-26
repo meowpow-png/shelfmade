@@ -1,4 +1,7 @@
+import { useState } from 'react'
+
 import { BookOpenIcon } from '@/client/BookOpenIcon'
+import { NewBookDialog } from '@/client/NewBookDialog'
 
 export interface BookSummary {
   slug: string
@@ -10,11 +13,27 @@ interface BooksPageProps {
 }
 
 export function BooksPage({ books }: BooksPageProps) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+
+  function createBook(title: string) {
+    setCreating(true)
+    fetch('/books', { method: 'POST', body: title })
+      .then((response) => response.json() as Promise<BookSummary>)
+      .then(({ slug }) => {
+        window.location.href = `${slug}.html`
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to create book:', error)
+        setCreating(false)
+      })
+  }
+
   return (
     <div className="books-page">
       <div className="books-header">
         <h1 className="books-header-title">Your books</h1>
-        <button type="button" className="new-book-button">
+        <button type="button" className="new-book-button" onClick={() => setDialogOpen(true)}>
           + New book
         </button>
       </div>
@@ -39,6 +58,12 @@ export function BooksPage({ books }: BooksPageProps) {
           ))}
         </ul>
       )}
+      <NewBookDialog
+        open={dialogOpen}
+        creating={creating}
+        onOpenChange={setDialogOpen}
+        onSubmit={createBook}
+      />
     </div>
   )
 }

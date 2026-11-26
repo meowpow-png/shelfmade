@@ -79,7 +79,7 @@ function linkPath(root: string) {
   return path.length < PACKAGE_ROOT.length ? path : PACKAGE_ROOT
 }
 
-function slugify(name: string) {
+export function slugify(name: string) {
   const slug = name
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')

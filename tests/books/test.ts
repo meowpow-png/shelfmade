@@ -27,7 +27,14 @@ interface BookOrderServerFixture {
   reorder: (chapterSlug: string, order: number) => Promise<APIResponse>
 }
 
+interface BookCreateServerFixture {
+  baseURL: string
+  create: (title: string) => Promise<APIResponse>
+  sandbox: BookSandbox
+}
+
 interface BookFixtures {
+  bookCreateServer: BookCreateServerFixture
   bookOrderServer: BookOrderServerFixture
   fieldNotes: FieldNotesFixture
 }
@@ -89,6 +96,32 @@ export const test = base.extend<BookFixtures>({
           await server.close()
         }
       } finally {
+        releaseLock()
+      }
+    },
+    { timeout: 180_000 },
+  ],
+  bookCreateServer: [
+    async ({ request }, provide, testInfo) => {
+      const releaseLock = await acquireBookIntegrationLock()
+      const sandbox = createBookSandbox()
+      const port = 8999 + testInfo.workerIndex
+
+      try {
+        const server = await startViteServer(sandbox.root, port)
+        const baseURL = `http://127.0.0.1:${port}`
+
+        try {
+          await provide({
+            baseURL,
+            create: (title) => request.post(`${baseURL}/books`, { data: title }),
+            sandbox,
+          })
+        } finally {
+          await server.close()
+        }
+      } finally {
+        sandbox.cleanup()
         releaseLock()
       }
     },
