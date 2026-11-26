@@ -53,12 +53,8 @@ export const test = base.extend<BookFixtures>({
         bytes: (file) => readFileSync(pathOf(file)),
         files: FIELD_NOTES_FILES,
         load: async (backfillOrder = true) => {
-          const [book] = await resolveBooks(
-            { books: { 'field-notes': { title: 'Field Notes' } } },
-            sandbox.root,
-            { backfillOrder },
-          )
-          return book!
+          const books = await resolveBooks({}, sandbox.root, { backfillOrder })
+          return books.find((book) => book.slug === 'field-notes')!
         },
         orderOf: (file) => Number(source(file).match(/^order:\s*(\d+)/m)?.[1]),
         sandbox,

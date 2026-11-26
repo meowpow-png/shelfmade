@@ -9,7 +9,7 @@ There are four commands:
 - `build` — render each book to HTML
 - `pdf` — print each book to PDF
 
-Apart from `init`, every command operates on every book configured in the project in one go, writing separate output files per book.
+Apart from `init`, every command operates on every book in the project in one go, writing separate output files per book.
 
 Commands run on the book project in the current directory. Pass `--root <dir>` to run on a project elsewhere; output still goes to that project's `dist/`:
 
@@ -102,6 +102,8 @@ shelfmade.config.ts
 components/
 books/
     <slug>/
+        book.json
+        book.config.ts
         App.tsx
         *.css
         content/
@@ -115,37 +117,62 @@ books/
 import { defineConfig } from 'shelfmade'
 
 import * as components from './components'
-import { App } from './books/ebook-1/App'
-import { ZodiacBanner } from './books/ebook-1/ZodiacBanner'
 
 export default defineConfig({
   lang: 'hr',
   titlePrefix: 'Slađana Wolf',
   pageFormat: 'A5',
   components,
-  books: {
-    'ebook-1': {
-      title: 'Kako horoskop utječe na vaše financije',
-      components: { ZodiacBanner },
-      App,
-    },
-  },
 })
 ```
 
-Project-level options apply to every book; a book can override `lang` and `pageFormat`.
+These apply to every book, unless a book's own `book.json`/`book.config.ts` overrides them.
 
-| Option        | Level         | Default                 | Description                                                                     |
-| ------------- | ------------- | ----------------------- | ------------------------------------------------------------------------------- |
-| `books`       | project       | —                       | Books keyed by slug; the slug names the output files                            |
-| `titlePrefix` | project       | none                    | Prepended to every book's document title (`<prefix> — <title>`)                 |
-| `components`  | project, book | none                    | Components available to MDX content; a book's map is merged over the shared one |
-| `lang`        | project, book | `'en'`                  | Document language (`<html lang>`)                                               |
-| `pageFormat`  | project, book | `'A5'`                  | `'A4'`, `'A5'`, `'A6'`, `'Letter'` or `{ width, height }` in CSS lengths        |
-| `title`       | book          | —                       | Book title, shown in the document title and the index page                      |
-| `dir`         | book          | `books/<slug>`          | Book directory, relative to the project root                                    |
-| `content`     | book          | `content`               | Chapter directory, relative to the book directory                               |
-| `App`         | book          | one section per chapter | Layout component wrapping the chapters                                          |
+| Option        | Default | Description                                                              |
+| ------------- | ------- | ------------------------------------------------------------------------ |
+| `titlePrefix` | none    | Prepended to every book's document title (`<prefix> — <title>`)          |
+| `components`  | none    | Components available to MDX content in every book                        |
+| `lang`        | `'en'`  | Document language (`<html lang>`)                                        |
+| `pageFormat`  | `'A5'`  | `'A4'`, `'A5'`, `'A6'`, `'Letter'` or `{ width, height }` in CSS lengths |
+
+### Books
+
+Every directory under `books/` is a book; the slug (its directory name) names the output files. No registration is needed elsewhere.
+
+A book's own data lives in `book.json`:
+
+```json
+{
+  "title": "Kako horoskop utječe na vaše financije",
+  "lang": "hr",
+  "pageFormat": "A5"
+}
+```
+
+| Field        | Default                         | Description                                                |
+| ------------ | ------------------------------- | ---------------------------------------------------------- |
+| `title`      | the directory name, capitalized | Book title, shown in the document title and the index page |
+| `lang`       | the project's `lang`            | Document language                                          |
+| `pageFormat` | the project's `pageFormat`      | Page format                                                |
+
+A book's own components and layout, if it needs any, live in an optional `book.config.ts`:
+
+```ts
+import { defineBookConfig } from 'shelfmade'
+
+import { App } from './App'
+import { ZodiacBanner } from './ZodiacBanner'
+
+export default defineBookConfig({
+  components: { ZodiacBanner },
+  App,
+})
+```
+
+| Field        | Default                     | Description                                                                  |
+| ------------ | --------------------------- | ---------------------------------------------------------------------------- |
+| `components` | none                        | Components for this book's MDX content, merged over the project's shared map |
+| `App`        | one `<section>` per chapter | Layout component wrapping the chapters                                       |
 
 ### Content
 
@@ -183,7 +210,7 @@ Without `App`, each chapter is rendered in a `<section class="chapter">`.
 
 ### Code
 
-Shelfmade compiles `shelfmade.config.ts` and every component it imports itself, so a book project has no build step. Book projects don't install React: every `react` import uses Shelfmade's own copy. Install `@types/react` as a dev dependency for editor type checking. Any other package a component imports must be installed in the book project.
+Shelfmade compiles `shelfmade.config.ts`, every book's `book.config.ts`, and every component they import itself, so a book project has no build step. Book projects don't install React: every `react` import uses Shelfmade's own copy. Install `@types/react` as a dev dependency for editor type checking. Any other package a component imports must be installed in the book project.
 
 Components can't import CSS yet; put stylesheets in the book directory instead.
 
@@ -193,4 +220,4 @@ Every `.css` file directly in a book's directory is loaded into that book's docu
 
 ## Adding a new book
 
-Add a directory with its content and an entry under `books` in `shelfmade.config.ts`. No changes to Shelfmade are needed — every command picks up every configured book automatically.
+Add a `books/<slug>` directory with a `content/` folder of `.mdx` chapters and a `book.json` for its `title`. No changes to `shelfmade.config.ts` are needed — every command discovers every `books/<slug>` directory automatically.

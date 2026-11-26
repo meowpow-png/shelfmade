@@ -1,4 +1,12 @@
-import { mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 
 import { type ViteDevServer } from 'vite'
@@ -7,40 +15,74 @@ import { readMdx } from '@/engine/mdx'
 import { resolvePageSize } from '@/engine/page-format'
 import { type Book } from '@/engine/render'
 import {
+  loadBookConfig as loadBookConfigEsbuild,
+  loadBookConfigViaVite,
   loadConfigViaVite,
+  type BookConfig,
   type Chapter,
   type Components,
   type LayoutProps,
+  type PageFormat,
   type ShelfmadeConfig,
 } from '@/config'
+
+export type BookConfigLoader = (dir: string) => Promise<BookConfig | undefined>
+
+const BOOK_DATA_FILE = 'book.json'
+
+interface BookData {
+  title?: string
+  lang?: string
+  pageFormat?: PageFormat
+}
+
+function readBookData(dir: string): BookData {
+  const path = join(dir, BOOK_DATA_FILE)
+  if (!existsSync(path)) return {}
+  return JSON.parse(readFileSync(path, 'utf-8')) as BookData
+}
 
 // Mirrors resolveBooks, but loads the config through Vite's SSR module graph
 // so component imports participate in Vite's live resolution and invalidation.
 export async function resolveBooksViaVite(server: ViteDevServer, root: string): Promise<Book[]> {
   const config = await loadConfigViaVite(server, root)
-  return resolveBooks(config, root, { backfillOrder: true })
+  return resolveBooks(config, root, {
+    backfillOrder: true,
+    loadBookConfig: (dir) => loadBookConfigViaVite(server, dir),
+  })
 }
 
 // backfillOrder is dev-server only - a build must never write to source content
 export async function resolveBooks(
   config: ShelfmadeConfig,
   root: string,
-  { backfillOrder = false }: { backfillOrder?: boolean } = {},
+  {
+    backfillOrder = false,
+    loadBookConfig = (dir) => loadBookConfigEsbuild(root, dir),
+  }: { backfillOrder?: boolean; loadBookConfig?: BookConfigLoader } = {},
 ): Promise<Book[]> {
+  const booksDir = resolve(root, 'books')
+  const slugs = existsSync(booksDir)
+    ? readdirSync(booksDir).filter((entry) => statSync(join(booksDir, entry)).isDirectory())
+    : []
+
   return Promise.all(
-    Object.entries(config.books).map(async ([slug, book]) => {
-      const dir = resolve(root, book.dir ?? join('books', slug))
-      const contentDir = resolve(dir, book.content ?? 'content')
-      const components = { ...config.components, ...book.components }
+    slugs.map(async (slug) => {
+      const dir = join(booksDir, slug)
+      const contentDir = join(dir, 'content')
+      const bookData = readBookData(dir)
+      const bookConfig = await loadBookConfig(dir)
+      const components = { ...config.components, ...bookConfig?.components }
       const chapters = await readChapters(contentDir, components, backfillOrder)
-      const Layout = book.App ?? DefaultLayout
+      const title = bookData.title ?? humanize(slug)
+      const Layout = bookConfig?.App ?? DefaultLayout
 
       return {
         slug,
-        title: book.title,
-        documentTitle: config.titlePrefix ? `${config.titlePrefix} — ${book.title}` : book.title,
-        lang: book.lang ?? config.lang ?? 'en',
-        pageSize: resolvePageSize(book.pageFormat ?? config.pageFormat ?? 'A5'),
+        title,
+        documentTitle: config.titlePrefix ? `${config.titlePrefix} — ${title}` : title,
+        lang: bookData.lang ?? config.lang ?? 'en',
+        pageSize: resolvePageSize(bookData.pageFormat ?? config.pageFormat ?? 'A5'),
         dir,
         // path is for vite-server.tsx's save route only - never sent to the browser
         chapters: chapters.map(({ slug, frontmatter, content }) => ({
@@ -50,10 +92,18 @@ export async function resolveBooks(
           path: join(contentDir, `${slug}.mdx`),
           order: typeof frontmatter.order === 'number' ? frontmatter.order : undefined,
         })),
-        App: () => <Layout title={book.title} chapters={chapters} />,
+        App: () => <Layout title={title} chapters={chapters} />,
       }
     }),
   )
+}
+
+function humanize(slug: string): string {
+  return slug.split('-').map(capitalize).join(' ')
+}
+
+function capitalize(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1)
 }
 
 const LOCK_STALE_MS = 30_000
