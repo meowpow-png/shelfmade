@@ -4,6 +4,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  truncateSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs'
@@ -449,9 +450,30 @@ async function saveChapter(
   }
 
   const content = await readRequestBody(request)
-  writeFileSync(chapter.path, content)
+  // Plain writeFileSync would recreate a concurrently-deleted file instead of failing
+  if (
+    !writeExistingFile(chapter.path, () => {
+      writeFileSync(chapter.path, content, { flag: 'r+' })
+      truncateSync(chapter.path, Buffer.byteLength(content))
+    })
+  ) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
   response.statusCode = 204
   response.end()
+}
+
+// Closes the delete-during-write race: the file may vanish between the earlier existence check and this write
+export function writeExistingFile(path: string, write: () => void): boolean {
+  try {
+    write()
+    return true
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false
+    throw error
+  }
 }
 
 async function deleteChapter(
@@ -571,7 +593,14 @@ async function renameChapter(
     return
   }
 
-  writeFileSync(chapter.path, withTitle(readFileSync(chapter.path, 'utf-8'), title))
+  const renamed = writeExistingFile(chapter.path, () => {
+    writeFileSync(chapter.path, withTitle(readFileSync(chapter.path, 'utf-8'), title))
+  })
+  if (!renamed) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
   await respondWithChapters(server, root, slug, response, 200)
 }
 
