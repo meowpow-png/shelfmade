@@ -20,7 +20,12 @@ export function ChapterRowMenu({ title, disabled, onRename, onDelete }: ChapterR
           icon: <PencilIcon className="row-menu-item-icon" />,
           onSelect: onRename,
         },
-        { label: 'Delete', icon: <TrashIcon className="row-menu-item-icon" />, onSelect: onDelete },
+        {
+          label: 'Delete',
+          icon: <TrashIcon className="row-menu-item-icon" />,
+          destructive: true,
+          onSelect: onDelete,
+        },
       ]}
     />
   )

@@ -7,6 +7,7 @@ import { EllipsisVerticalIcon } from '@/client/EllipsisVerticalIcon'
 interface RowMenuItem {
   label: string
   icon?: ReactNode
+  destructive?: boolean
   onSelect: () => void
 }
 
@@ -28,7 +29,13 @@ export function RowMenu({ label, disabled, items }: RowMenuProps) {
       <DropdownMenu.Portal>
         <DropdownMenu.Content className="row-menu-content" align="end" sideOffset={4}>
           {items.map((item) => (
-            <DropdownMenu.Item key={item.label} className="row-menu-item" onSelect={item.onSelect}>
+            <DropdownMenu.Item
+              key={item.label}
+              className={
+                item.destructive ? 'row-menu-item row-menu-item-destructive' : 'row-menu-item'
+              }
+              onSelect={item.onSelect}
+            >
               {item.icon}
               {item.label}
             </DropdownMenu.Item>

@@ -422,6 +422,14 @@ body {
   background: var(--color-surface);
 }
 
+.row-menu-item-destructive {
+  color: var(--color-danger);
+}
+
+.row-menu-item-destructive[data-highlighted] {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
 .row-menu-item-icon {
   display: inline-flex;
   flex-shrink: 0;
