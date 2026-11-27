@@ -34,10 +34,13 @@ A two-pane app replaces the terminal workflow: write content on one side and wat
 **Steps:**
 
 - [x] Browse your books from a visual index, instead of a folder listing
+- [x] Create and delete books from the visual index, instead of managing book folders by hand
 - [x] Open a book into a two-pane editor: content on one side, a live paginated preview on the other
 - [x] Edit chapter content and have it save automatically, with the preview staying in sync
 - [x] Switch between chapters from a collapsible sidebar, instead of scrolling through all of them at once
 - [x] Add a new chapter from the editor, instead of creating the file by hand
+- [x] Rename, reorder, and delete chapters from the editor
+- [x] Reload an open chapter after an external change, instead of overwriting it silently
 - [ ] See a clear saved/unsaved status while editing
 - [ ] Recover gracefully when a save fails
 
