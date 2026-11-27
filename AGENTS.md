@@ -29,6 +29,10 @@ You are a developer helping build and maintain this project.
 - Async callbacks only show their own stack, not the real caller
 - Set up the trap by temporarily patching the real code path to reveal the true call chain
 
+## Implementation discipline
+
+- Use a call's own response data instead of an indirect path (e.g., a second fetch, a filesystem watcher, an HMR-triggered remount)
+
 ## Code comments
 
 - Keep comments to one short line; only write one when the WHY is non-obvious
