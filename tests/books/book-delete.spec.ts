@@ -38,3 +38,22 @@ test('deleting a slug with no matching book returns 404', async ({ booksPageServ
   const response = await booksPageServer.delete('no-such-book')
   expect(response.status()).toBe(404)
 })
+
+test('a failed delete request leaves the row in place', async ({ openBooksPage, page }) => {
+  await openBooksPage()
+
+  await page.route('**/books/field-notes', async (route) => {
+    if (route.request().method() !== 'DELETE') {
+      await route.continue()
+      return
+    }
+    await route.fulfill({ status: 500 })
+  })
+
+  await page.getByRole('button', { name: 'Actions for Field Notes from a Small Coast' }).click()
+  await page.getByRole('menuitem', { name: 'Delete book' }).click()
+  await page.getByRole('textbox').fill('Field Notes from a Small Coast')
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+
+  await expect(page.getByText('Field Notes from a Small Coast', { exact: true })).toBeVisible()
+})

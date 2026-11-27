@@ -39,7 +39,10 @@ export function BooksPage({ books: initialBooks }: BooksPageProps) {
     setDeleteCandidateSlug(undefined)
 
     fetch(`/books/${slug}`, { method: 'DELETE' })
-      .then(() => setBooks((current) => current.filter((book) => book.slug !== slug)))
+      .then((response) => {
+        if (!response.ok) throw new Error(`Unexpected status ${response.status}`)
+        setBooks((current) => current.filter((book) => book.slug !== slug))
+      })
       .catch((error: unknown) => console.error(`Failed to delete book "${slug}":`, error))
   }
 
