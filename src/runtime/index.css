@@ -101,6 +101,83 @@ body {
   text-decoration: none;
 }
 
+.row-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  outline: none;
+}
+
+.row-menu-trigger:hover,
+.row-menu-trigger[data-state='open'] {
+  color: var(--color-text-primary);
+}
+
+.row-menu-trigger:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.row-menu-icon {
+  display: inline-flex;
+}
+
+.row-menu-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.row-menu-content {
+  min-width: 140px;
+  padding: 4px;
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  background: var(--color-background);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+  font-family: var(--font-sans);
+}
+
+.row-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+  outline: none;
+}
+
+.row-menu-item[data-highlighted] {
+  background: var(--color-surface);
+}
+
+.row-menu-item-destructive {
+  color: var(--color-danger);
+}
+
+.row-menu-item-destructive[data-highlighted] {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+.row-menu-item-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.row-menu-item-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 .empty-state {
   margin: 0;
   padding: 48px 0;
@@ -211,5 +288,105 @@ body {
 
 .new-book-cancel:focus-visible,
 .new-book-confirm:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.book-delete-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+}
+
+.book-delete-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: 8px;
+  background: var(--color-background);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+  font-family: var(--font-sans);
+  transform: translate(-50%, -50%);
+  outline: none;
+}
+
+.book-delete-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.book-delete-description {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.book-delete-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: 6px;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  outline: none;
+}
+
+.book-delete-input:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.book-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.book-delete-cancel,
+.book-delete-confirm {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.book-delete-cancel {
+  background: color-mix(in srgb, var(--color-surface) 80%, var(--color-background));
+  color: var(--color-text-primary);
+}
+
+.book-delete-cancel:hover {
+  background: color-mix(in srgb, var(--color-surface) 90%, black);
+}
+
+.book-delete-confirm {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.book-delete-confirm:hover {
+  background: color-mix(in srgb, var(--color-danger) 85%, black);
+}
+
+.book-delete-confirm:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.book-delete-cancel:focus-visible,
+.book-delete-confirm:focus-visible {
   box-shadow: var(--focus-ring);
 }

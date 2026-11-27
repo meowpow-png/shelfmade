@@ -6,6 +6,7 @@ const bookIntegrationTests = [
   /tests\/books\/book-chapter-create\.spec\.ts/,
   /tests\/books\/book-chapter-rename\.spec\.ts/,
   /tests\/books\/book-create\.spec\.ts/,
+  /tests\/books\/book-delete\.spec\.ts/,
   /tests\/editor\/.*\.spec\.ts/,
 ]
 

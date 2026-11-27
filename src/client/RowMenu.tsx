@@ -13,7 +13,7 @@ interface RowMenuItem {
 
 interface RowMenuProps {
   label: string
-  disabled: boolean
+  disabled?: boolean
   items: RowMenuItem[]
 }
 

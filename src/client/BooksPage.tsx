@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
+import { BookDeleteDialog } from '@/client/BookDeleteDialog'
 import { BookOpenIcon } from '@/client/BookOpenIcon'
+import { BookRowMenu } from '@/client/BookRowMenu'
 import { NewBookDialog } from '@/client/NewBookDialog'
 
 export interface BookSummary {
@@ -12,9 +14,13 @@ interface BooksPageProps {
   books: BookSummary[]
 }
 
-export function BooksPage({ books }: BooksPageProps) {
+export function BooksPage({ books: initialBooks }: BooksPageProps) {
+  const [books, setBooks] = useState(initialBooks)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [deleteCandidateSlug, setDeleteCandidateSlug] = useState<string>()
+
+  const deleteCandidate = books.find((book) => book.slug === deleteCandidateSlug)
 
   function createBook(title: string) {
     setCreating(true)
@@ -27,6 +33,14 @@ export function BooksPage({ books }: BooksPageProps) {
         console.error('Failed to create book:', error)
         setCreating(false)
       })
+  }
+
+  function confirmDelete(slug: string) {
+    setDeleteCandidateSlug(undefined)
+
+    fetch(`/books/${slug}`, { method: 'DELETE' })
+      .then(() => setBooks((current) => current.filter((book) => book.slug !== slug)))
+      .catch((error: unknown) => console.error(`Failed to delete book "${slug}":`, error))
   }
 
   return (
@@ -54,6 +68,7 @@ export function BooksPage({ books }: BooksPageProps) {
               <a className="book-row-open" href={`${slug}.html`}>
                 Open
               </a>
+              <BookRowMenu title={title} onDelete={() => setDeleteCandidateSlug(slug)} />
             </li>
           ))}
         </ul>
@@ -63,6 +78,14 @@ export function BooksPage({ books }: BooksPageProps) {
         creating={creating}
         onOpenChange={setDialogOpen}
         onSubmit={createBook}
+      />
+      <BookDeleteDialog
+        open={deleteCandidate !== undefined}
+        title={deleteCandidate?.title ?? ''}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCandidateSlug(undefined)
+        }}
+        onConfirm={() => deleteCandidate && confirmDelete(deleteCandidate.slug)}
       />
     </div>
   )

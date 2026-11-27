@@ -4,6 +4,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  rmSync,
   truncateSync,
   unlinkSync,
   writeFileSync,
@@ -385,6 +386,20 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     )
   })
 
+  server.middlewares.use((request, response, next) => {
+    const match = request.method === 'DELETE' ? /^\/books\/([^/]+)$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    deleteBook(server, root, slug, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
   await server.listen()
   server.printUrls()
 
@@ -677,6 +692,27 @@ async function createBook(root: string, request: IncomingMessage, response: Serv
   response.statusCode = 201
   response.setHeader('Content-Type', 'application/json')
   response.end(JSON.stringify({ slug, title }))
+}
+
+async function deleteBook(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  rmSync(book.dir, { recursive: true, force: true })
+
+  response.statusCode = 204
+  response.end()
 }
 
 // mkdirSync doubles as the atomic uniqueness check, closing the race between checking and creating

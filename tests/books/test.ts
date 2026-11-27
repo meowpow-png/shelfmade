@@ -33,10 +33,20 @@ interface BookCreateServerFixture {
   sandbox: BookSandbox
 }
 
+interface BooksPageServerFixture {
+  baseURL: string
+  delete: (slug: string) => Promise<APIResponse>
+  sandbox: BookSandbox
+}
+
+type OpenBooksPage = () => Promise<void>
+
 interface BookFixtures {
   bookCreateServer: BookCreateServerFixture
+  booksPageServer: BooksPageServerFixture
   bookOrderServer: BookOrderServerFixture
   fieldNotes: FieldNotesFixture
+  openBooksPage: OpenBooksPage
 }
 
 function clearOrder(sandbox: BookSandbox, file: string) {
@@ -127,6 +137,37 @@ export const test = base.extend<BookFixtures>({
     },
     { timeout: 180_000 },
   ],
+  booksPageServer: [
+    async ({ request }, provide, testInfo) => {
+      const releaseLock = await acquireBookIntegrationLock()
+      const sandbox = createBookSandbox()
+      const port = 9199 + testInfo.workerIndex
+
+      try {
+        const server = await startViteServer(sandbox.root, port)
+        const baseURL = `http://127.0.0.1:${port}`
+
+        try {
+          await provide({
+            baseURL,
+            delete: (slug) => request.delete(`${baseURL}/books/${slug}`),
+            sandbox,
+          })
+        } finally {
+          await server.close()
+        }
+      } finally {
+        sandbox.cleanup()
+        releaseLock()
+      }
+    },
+    { timeout: 180_000 },
+  ],
+  openBooksPage: async ({ booksPageServer, page }, provide) => {
+    await provide(async () => {
+      await page.goto(`${booksPageServer.baseURL}/`)
+    })
+  },
 })
 
 export { expect }
