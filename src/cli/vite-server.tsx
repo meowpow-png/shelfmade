@@ -494,15 +494,20 @@ async function deleteChapter(
   }
 
   const contentDir = dirname(chapter.path)
-  await withOrderLock(contentDir, () => {
+  await withOrderLock(contentDir, async () => {
     unlinkSync(chapter.path)
     // Front-run chokidar's async pickup so HMR invalidation can't race a later navigation
     server.watcher.emit('unlink', chapter.path)
     // Chokidar still detects the same unlink moments later; suppress that redundant repeat
     suppressedUnlinks.get(server)?.add(chapter.path)
 
+    // Re-read inside the lock - a concurrent reorder/delete may have changed order since the snapshot above
+    const freshChapters =
+      (await resolveBooksViaVite(server, root)).find((candidate) => candidate.slug === slug)
+        ?.chapters ?? []
+
     // This route only ever runs via the dev server, which always backfills order
-    const remaining = book.chapters
+    const remaining = freshChapters
       .filter((candidate) => candidate.slug !== chapterSlug)
       .sort((a, b) => a.order! - b.order!)
 
@@ -542,11 +547,17 @@ async function reorderChapter(
   }
 
   const contentDir = dirname(chapter.path)
-  await withOrderLock(contentDir, () => {
+  await withOrderLock(contentDir, async () => {
+    // Re-read inside the lock - a concurrent reorder/delete may have changed order since the snapshot above
+    const freshChapters =
+      (await resolveBooksViaVite(server, root)).find((candidate) => candidate.slug === slug)
+        ?.chapters ?? []
+
     // This route only ever runs via the dev server, which always backfills order
-    const ordered = [...book.chapters].sort((a, b) => a.order! - b.order!)
+    const ordered = [...freshChapters].sort((a, b) => a.order! - b.order!)
     const fromIndex = ordered.findIndex((candidate) => candidate.slug === chapterSlug)
-    // chapterSlug was already confirmed present in book.chapters above
+    // chapterSlug may no longer be present if a concurrent delete removed it; nothing to reorder then
+    if (fromIndex === -1) return
     const moved = ordered.splice(fromIndex, 1)[0]!
     ordered.splice(targetOrder - 1, 0, moved)
 
