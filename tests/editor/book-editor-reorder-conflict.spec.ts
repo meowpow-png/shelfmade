@@ -35,7 +35,7 @@ test('reordering a sibling chapter never banners the chapter that is open', asyn
     `${editorBaseURL}/books/field-notes/chapters/chapter-3/order`,
     { data: '1' },
   )
-  expect(response.status()).toBe(204)
+  expect(response.status()).toBe(200)
 
   await expect(page.locator('.chapter-nav-item')).toHaveText([
     'Chapter Three',

@@ -3,6 +3,7 @@ import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 
 import { BookOpenIcon } from '@/client/BookOpenIcon'
+import { getChaptersStore } from '@/client/chapters-store'
 import { baseExtensions } from '@/client/editor-extensions'
 import { editorTheme } from '@/client/editor-theme'
 import { headingHighlight } from '@/client/heading-highlight'
@@ -16,7 +17,6 @@ export interface EditorChapter {
 }
 
 interface EditorProps {
-  chapters: EditorChapter[]
   bookSlug: string
   saveDebounceMs: number
 }
@@ -72,12 +72,14 @@ function getConflictStore(): ReturnType<typeof createConflictStore> {
   return (moduleConflictStore ??= createConflictStore())
 }
 
-export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
+export function Editor({ bookSlug, saveDebounceMs }: EditorProps) {
   const selectedChapterStore = getSelectedChapterStore()
   const selectedSlug = useSyncExternalStore(
     selectedChapterStore.subscribe,
     selectedChapterStore.getSnapshot,
   )
+  const chaptersStore = getChaptersStore()
+  const chapters = useSyncExternalStore(chaptersStore.subscribe, chaptersStore.getSnapshot)
   const selectedChapter = chapters.find((chapter) => chapter.slug === selectedSlug) ?? chapters[0]
 
   // Pinned by slug, not position, so a reorder can't silently swap which chapter is shown

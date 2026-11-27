@@ -474,8 +474,7 @@ async function deleteChapter(
     })
   })
 
-  response.statusCode = 204
-  response.end()
+  await respondWithChapters(server, root, slug, response, 200)
 }
 
 async function reorderChapter(
@@ -519,8 +518,7 @@ async function reorderChapter(
     })
   })
 
-  response.statusCode = 204
-  response.end()
+  await respondWithChapters(server, root, slug, response, 200)
 }
 
 async function renameChapter(
@@ -543,8 +541,7 @@ async function renameChapter(
 
   const title = await readRequestBody(request)
   writeFileSync(chapter.path, withTitle(readFileSync(chapter.path, 'utf-8'), title))
-  response.statusCode = 204
-  response.end()
+  await respondWithChapters(server, root, slug, response, 200)
 }
 
 const DEFAULT_CHAPTER_TITLE = 'Untitled chapter'
@@ -566,17 +563,14 @@ async function createChapter(
 
   const contentDir = join(book.dir, 'content')
 
-  const chapter = await withOrderLock(contentDir, () => {
+  await withOrderLock(contentDir, () => {
     const chapterSlug = `chapter-${nextChapterIndex(contentDir)}`
     const nextOrder = Math.max(0, ...book.chapters.map((candidate) => candidate.order ?? 0)) + 1
     const source = withTitle(withOrder('', nextOrder), DEFAULT_CHAPTER_TITLE)
     writeFileSync(join(contentDir, `${chapterSlug}.mdx`), source)
-    return { slug: chapterSlug, title: DEFAULT_CHAPTER_TITLE }
   })
 
-  response.statusCode = 201
-  response.setHeader('Content-Type', 'application/json')
-  response.end(JSON.stringify(chapter))
+  await respondWithChapters(server, root, slug, response, 201)
 }
 
 async function createBook(root: string, request: IncomingMessage, response: ServerResponse) {
@@ -625,6 +619,20 @@ function readRequestBody(request: IncomingMessage): Promise<string> {
     request.on('end', () => resolveBody(Buffer.concat(chunks).toString('utf-8')))
     request.on('error', reject)
   })
+}
+
+// Re-reads from disk so the response reflects any order/title rewrites the mutation just made
+async function respondWithChapters(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  response: ServerResponse,
+  statusCode: number,
+) {
+  const json = await serveChapters(server, root, slug)
+  response.statusCode = statusCode
+  response.setHeader('Content-Type', 'application/json')
+  response.end(json ?? '[]')
 }
 
 // Same shape as __SHELFMADE_CHAPTERS_JSON__ in serveBookPage, re-read fresh from disk

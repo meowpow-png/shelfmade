@@ -13,7 +13,7 @@ test('renaming only touches the title line, leaving order, body, and siblings un
     `${bookOrderServer.baseURL}/books/field-notes/chapters/chapter-2/title`,
     { data: 'Renamed Chapter Two' },
   )
-  expect(response.status()).toBe(204)
+  expect(response.status()).toBe(200)
 
   const after = fieldNotes.source('chapter-2.mdx')
   expect(after).toContain('title: "Renamed Chapter Two"')

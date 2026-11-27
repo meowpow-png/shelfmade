@@ -2,6 +2,7 @@ import { createRoot, type Root } from 'react-dom/client'
 
 import { ActivityBar } from '@/client/ActivityBar'
 import { ChapterNav } from '@/client/ChapterNav'
+import { getChaptersStore } from '@/client/chapters-store'
 import { Editor, type EditorChapter } from '@/client/Editor'
 // Side-effect only - keeps chapter edits in Vite's module graph so HMR fires, see that file
 import '@/client/resolve-book'
@@ -66,31 +67,32 @@ function mountEditor(
   // window.__SHELFMADE_CHAPTERS__ is only fresh on this first call; later remounts need refetch
   if (!hot || !hot.data.editorMounted) {
     if (hot) hot.data.editorMounted = true
-    renderEditor(root, chapterNavRoot, activityBarRoot, window.__SHELFMADE_CHAPTERS__)
+    getChaptersStore(window.__SHELFMADE_CHAPTERS__)
+    renderEditor(root, chapterNavRoot, activityBarRoot)
     return
   }
 
-  fetchChapters(window.__SHELFMADE_BOOK_SLUG__).then((chapters) =>
-    renderEditor(root, chapterNavRoot, activityBarRoot, chapters),
-  )
+  // Covers edits made outside the editor
+  const chaptersStore = getChaptersStore()
+  const sequence = chaptersStore.reserveSequence()
+  fetchChapters(window.__SHELFMADE_BOOK_SLUG__).then((chapters) => {
+    chaptersStore.set(chapters, sequence)
+    renderEditor(root, chapterNavRoot, activityBarRoot)
+  })
 }
 
 function renderEditor(
   root: Root,
   chapterNavRoot: Root | undefined,
   activityBarRoot: Root | undefined,
-  chapters: EditorChapter[],
 ) {
   root.render(
     <Editor
-      chapters={chapters}
       bookSlug={window.__SHELFMADE_BOOK_SLUG__}
       saveDebounceMs={window.__SHELFMADE_REMOUNT_DEBOUNCE_MS__}
     />,
   )
-  chapterNavRoot?.render(
-    <ChapterNav chapters={chapters} bookSlug={window.__SHELFMADE_BOOK_SLUG__} />,
-  )
+  chapterNavRoot?.render(<ChapterNav bookSlug={window.__SHELFMADE_BOOK_SLUG__} />)
   activityBarRoot?.render(<ActivityBar />)
 }
 

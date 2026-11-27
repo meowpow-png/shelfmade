@@ -32,7 +32,7 @@ test('Cancel leaves the file and the row intact', async ({ openBook, page, sandb
   expect(existsSync(path)).toBe(true)
 })
 
-test('confirming delete removes the row before the request resolves', async ({
+test('confirming delete removes the row only once the request resolves', async ({
   openBook,
   page,
 }) => {
@@ -51,11 +51,16 @@ test('confirming delete removes the row before the request resolves', async ({
   await page.getByRole('menuitem', { name: 'Delete' }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
+  // Stays until the server confirms the deletion
+  await expect(
+    page.getByRole('button', { name: 'The Rituals That Build Trust', exact: true }),
+  ).toBeVisible()
+
+  releaseDelete!()
+
   await expect(
     page.getByRole('button', { name: 'The Rituals That Build Trust', exact: true }),
   ).toHaveCount(0)
-
-  releaseDelete!()
 })
 
 test('deleting the selected chapter falls back to the new first chapter', async ({

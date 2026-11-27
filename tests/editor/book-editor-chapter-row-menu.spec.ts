@@ -56,7 +56,7 @@ test('menu rename on a non-selected chapter does not change the selection', asyn
   )
 })
 
-test('renaming an existing chapter updates the row immediately, before the write completes', async ({
+test('renaming an existing chapter updates the row only once the write completes', async ({
   openBook,
   page,
 }) => {
@@ -76,13 +76,20 @@ test('renaming an existing chapter updates the row immediately, before the write
   await page.locator('.chapter-nav-rename').fill('Renamed Chapter Two')
   await page.locator('.chapter-nav-rename').press('Enter')
 
+  // The row reverts to its pre-rename title until the server confirms the new one
+  await expect(page.locator('.chapter-nav-item')).toHaveText([
+    'Chapter One',
+    'Chapter Two',
+    'Chapter Three',
+  ])
+
+  releaseTitlePut!()
+
   await expect(page.locator('.chapter-nav-item')).toHaveText([
     'Chapter One',
     'Renamed Chapter Two',
     'Chapter Three',
   ])
-
-  releaseTitlePut!()
 })
 
 test('one row renaming disables other rows menu triggers and the add button', async ({
