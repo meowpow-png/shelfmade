@@ -494,8 +494,10 @@ async function deleteChapter(
   }
 
   const contentDir = dirname(chapter.path)
-  await withOrderLock(contentDir, async () => {
-    unlinkSync(chapter.path)
+  const deleted = await withOrderLock(contentDir, async () => {
+    // A concurrent delete of the same chapter may have already won the lock
+    if (!writeExistingFile(chapter.path, () => unlinkSync(chapter.path))) return false
+
     // Front-run chokidar's async pickup so HMR invalidation can't race a later navigation
     server.watcher.emit('unlink', chapter.path)
     // Chokidar still detects the same unlink moments later; suppress that redundant repeat
@@ -516,7 +518,14 @@ async function deleteChapter(
       if (candidate.order === newOrder) return
       writeFileSync(candidate.path, withOrder(readFileSync(candidate.path, 'utf-8'), newOrder))
     })
+    return true
   })
+
+  if (!deleted) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
 
   await respondWithChapters(server, root, slug, response, 200)
 }

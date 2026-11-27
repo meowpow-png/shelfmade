@@ -1,6 +1,7 @@
-import { mkdirSync, rmSync } from 'node:fs'
+import { mkdirSync, rmSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { chapterPath } from '../book-sandbox'
 import { expect, test } from './test'
 
 function wait(ms: number) {
@@ -57,4 +58,27 @@ test('delete recomputes remaining order from the latest state, not the pre-lock 
   expect(response.status()).toBe(200)
   expect(fieldNotes.orderOf('chapter-3.mdx')).toBe(1)
   expect(fieldNotes.orderOf('chapter-2.mdx')).toBe(2)
+})
+
+test('deleting a chapter that a concurrent delete already removed returns 404, not a crash', async ({
+  bookOrderServer,
+  fieldNotes,
+  request,
+}) => {
+  const lockPath = join(fieldNotesContentDir(fieldNotes.sandbox.root), '.order.lock')
+  mkdirSync(lockPath)
+
+  const deleting = request.delete(`${bookOrderServer.baseURL}/books/field-notes/chapters/chapter-2`)
+  // Lets the handler take its pre-lock snapshot and start waiting on the lock
+  await wait(75)
+
+  // Simulates another delete request already having won the lock and removed the file
+  unlinkSync(chapterPath(fieldNotes.sandbox, 'field-notes', 'chapter-2.mdx'))
+
+  rmSync(lockPath, { recursive: true })
+  const response = await deleting
+
+  expect(response.status()).toBe(404)
+  expect(fieldNotes.orderOf('chapter-1.mdx')).toBe(1)
+  expect(fieldNotes.orderOf('chapter-3.mdx')).toBe(3)
 })
