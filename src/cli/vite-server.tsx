@@ -605,8 +605,9 @@ async function createBook(root: string, request: IncomingMessage, response: Serv
 }
 
 // Appends -2, -3, ... on a collision, mirroring how a filesystem would never silently overwrite
+// 'index' is reserved for the books listing route, so it's treated as always taken
 function uniqueBookSlug(booksDir: string, base: string): string {
-  if (!existsSync(join(booksDir, base))) return base
+  if (base !== 'index' && !existsSync(join(booksDir, base))) return base
 
   let suffix = 2
   while (existsSync(join(booksDir, `${base}-${suffix}`))) suffix++

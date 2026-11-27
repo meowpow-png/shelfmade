@@ -27,6 +27,13 @@ test('a second book with a colliding title gets a deduped slug', async ({ bookCr
   expect(await second.json()).toEqual({ slug: 'field-guide-2', title: 'Field Guide' })
 })
 
+test('a book titled Index is deduped away from the reserved index slug', async ({
+  bookCreateServer,
+}) => {
+  const response = await bookCreateServer.create('Index')
+  expect(await response.json()).toEqual({ slug: 'index-2', title: 'Index' })
+})
+
 test('the new book is immediately visible to resolveBooks', async ({ bookCreateServer }) => {
   await bookCreateServer.create('Visible Right Away')
 
