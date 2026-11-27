@@ -193,7 +193,6 @@ interface EditorEmptyStateProps {
   bookSlug: string
 }
 
-// Chapter arrives via the same disk-write -> HMR remount path as ChapterNav's own "+" button
 function EditorEmptyState({ bookSlug }: EditorEmptyStateProps) {
   const [creating, setCreating] = useState(false)
 
@@ -205,7 +204,11 @@ function EditorEmptyState({ bookSlug }: EditorEmptyStateProps) {
   function addChapter() {
     setCreating(true)
     getNavCollapsedStore().set(false)
+    const chaptersStore = getChaptersStore()
+    const sequence = chaptersStore.reserveSequence()
     fetch(`/books/${bookSlug}/chapters`, { method: 'POST' })
+      .then((response) => response.json() as Promise<EditorChapter[]>)
+      .then((nextChapters) => chaptersStore.set(nextChapters, sequence))
       .catch((error: unknown) => console.error('Failed to create chapter:', error))
       .finally(() => setCreating(false))
   }

@@ -45,6 +45,25 @@ test('the empty state keeps the chapter nav collapsed until Add chapter is click
   await expect(page.locator('.chapter-nav')).toBeVisible()
 })
 
+test('clicking + Add chapter updates the editor even if the background chapters refetch never resolves', async ({
+  bookCreateServer,
+  page,
+}) => {
+  await page.goto(`${bookCreateServer.baseURL}/`)
+  await page.getByRole('button', { name: '+ New book' }).click()
+  await page.getByPlaceholder('Book title').fill('Chapter Sync Book')
+  await page.getByRole('button', { name: 'Create' }).click()
+  await page.waitForURL(`${bookCreateServer.baseURL}/chapter-sync-book.html`)
+
+  // Never resolves, isolating the create POST's own response as the only possible update source
+  await page.route('**/chapter-sync-book-chapters', () => {})
+
+  await page.getByRole('button', { name: '+ Add chapter' }).click()
+
+  await expect(page.locator('.editor-empty-state')).toHaveCount(0)
+  await expect(page.locator('.chapter-nav-item')).toHaveCount(1)
+})
+
 test('Escape closes the dialog with no create request sent', async ({ bookCreateServer, page }) => {
   await page.goto(`${bookCreateServer.baseURL}/`)
 
