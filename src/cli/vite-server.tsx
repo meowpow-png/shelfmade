@@ -593,10 +593,10 @@ async function createChapter(
 async function createBook(root: string, request: IncomingMessage, response: ServerResponse) {
   const title = await readRequestBody(request)
   const booksDir = resolve(root, 'books')
-  const slug = uniqueBookSlug(booksDir, slugify(title))
-  const contentDir = join(booksDir, slug, 'content')
+  mkdirSync(booksDir, { recursive: true })
 
-  mkdirSync(contentDir, { recursive: true })
+  const slug = createBookDir(booksDir, slugify(title))
+  mkdirSync(join(booksDir, slug, 'content'))
   writeFileSync(join(booksDir, slug, 'book.json'), `${JSON.stringify({ title }, null, 2)}\n`)
 
   response.statusCode = 201
@@ -604,14 +604,23 @@ async function createBook(root: string, request: IncomingMessage, response: Serv
   response.end(JSON.stringify({ slug, title }))
 }
 
-// Appends -2, -3, ... on a collision, mirroring how a filesystem would never silently overwrite
-// 'index' is reserved for the books listing route, so it's treated as always taken
-function uniqueBookSlug(booksDir: string, base: string): string {
-  if (base !== 'index' && !existsSync(join(booksDir, base))) return base
-
+// mkdirSync doubles as the atomic uniqueness check, closing the race between checking and creating
+export function createBookDir(booksDir: string, base: string): string {
+  let slug = base
   let suffix = 2
-  while (existsSync(join(booksDir, `${base}-${suffix}`))) suffix++
-  return `${base}-${suffix}`
+
+  while (true) {
+    // 'index' is reserved for the books listing route
+    if (slug !== 'index') {
+      try {
+        mkdirSync(join(booksDir, slug))
+        return slug
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+      }
+    }
+    slug = `${base}-${suffix++}`
+  }
 }
 
 // Remembers indices used per content dir so a deleted chapter's path is never reused mid-process
