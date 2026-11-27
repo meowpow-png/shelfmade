@@ -1,10 +1,12 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 
+import { BookOpenIcon } from '@/client/BookOpenIcon'
 import { baseExtensions } from '@/client/editor-extensions'
 import { editorTheme } from '@/client/editor-theme'
 import { headingHighlight } from '@/client/heading-highlight'
+import { getNavCollapsedStore } from '@/client/nav-collapsed-store'
 import { getSelectedChapterStore } from '@/client/selected-chapter-store'
 
 export interface EditorChapter {
@@ -168,7 +170,7 @@ export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
 
   return (
     <div className="editor">
-      {selectedChapter && (
+      {selectedChapter ? (
         <div className="editor-chapter-wrapper">
           {conflictContent !== undefined && <ConflictBanner onLoadExternal={loadExternalChanges} />}
           <ChapterEditor
@@ -178,7 +180,42 @@ export function Editor({ chapters, bookSlug, saveDebounceMs }: EditorProps) {
             onChange={handleBodyChange}
           />
         </div>
+      ) : (
+        <EditorEmptyState bookSlug={bookSlug} />
       )}
+    </div>
+  )
+}
+
+interface EditorEmptyStateProps {
+  bookSlug: string
+}
+
+// Chapter arrives via the same disk-write -> HMR remount path as ChapterNav's own "+" button
+function EditorEmptyState({ bookSlug }: EditorEmptyStateProps) {
+  const [creating, setCreating] = useState(false)
+
+  // Collapses the nav, which has nothing to list while the book has zero chapters
+  useEffect(() => {
+    getNavCollapsedStore().set(true)
+  }, [])
+
+  function addChapter() {
+    setCreating(true)
+    getNavCollapsedStore().set(false)
+    fetch(`/books/${bookSlug}/chapters`, { method: 'POST' })
+      .catch((error: unknown) => console.error('Failed to create chapter:', error))
+      .finally(() => setCreating(false))
+  }
+
+  return (
+    <div className="editor-empty-state">
+      <BookOpenIcon className="editor-empty-icon" />
+      <p className="editor-empty-title">Your story starts here</p>
+      <p className="editor-empty-description">Add your first chapter to start writing.</p>
+      <button type="button" className="editor-empty-add" disabled={creating} onClick={addChapter}>
+        + Add chapter
+      </button>
     </div>
   )
 }

@@ -1,10 +1,10 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { resolveBooks } from '../../src/engine/books'
 import { expect, test } from './test'
 
-test('scaffolds book.json and a single default chapter, returning the derived slug', async ({
+test('scaffolds book.json and an empty content dir, returning the derived slug', async ({
   bookCreateServer,
 }) => {
   const response = await bookCreateServer.create('My New Book')
@@ -16,10 +16,7 @@ test('scaffolds book.json and a single default chapter, returning the derived sl
     title: 'My New Book',
   })
 
-  const chapterSource = readFileSync(join(bookDir, 'content', 'chapter-1.mdx'), 'utf-8')
-  expect(chapterSource).toContain('order: 1')
-  expect(chapterSource).toContain('title: "Untitled chapter"')
-  expect(chapterSource.replace(/^---[\s\S]*?---\n*/, '')).toBe('')
+  expect(readdirSync(join(bookDir, 'content'))).toEqual([])
 })
 
 test('a second book with a colliding title gets a deduped slug', async ({ bookCreateServer }) => {

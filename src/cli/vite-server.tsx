@@ -557,15 +557,14 @@ async function createChapter(
 ) {
   const books = await resolveBooksViaVite(server, root)
   const book = books.find((candidate) => candidate.slug === slug)
-  const existingChapter = book?.chapters[0]
 
-  if (!book || !existingChapter) {
+  if (!book) {
     response.statusCode = 404
     response.end('Not found')
     return
   }
 
-  const contentDir = dirname(existingChapter.path)
+  const contentDir = join(book.dir, 'content')
 
   const chapter = await withOrderLock(contentDir, () => {
     const chapterSlug = `chapter-${nextChapterIndex(contentDir)}`
@@ -588,10 +587,6 @@ async function createBook(root: string, request: IncomingMessage, response: Serv
 
   mkdirSync(contentDir, { recursive: true })
   writeFileSync(join(booksDir, slug, 'book.json'), `${JSON.stringify({ title }, null, 2)}\n`)
-  writeFileSync(
-    join(contentDir, 'chapter-1.mdx'),
-    withTitle(withOrder('', 1), DEFAULT_CHAPTER_TITLE),
-  )
 
   response.statusCode = 201
   response.setHeader('Content-Type', 'application/json')
