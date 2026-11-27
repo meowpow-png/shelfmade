@@ -3,9 +3,10 @@ import { dirname, extname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { build, type Loader, type Plugin } from 'esbuild'
 
-import { type ShelfmadeConfig } from '@/config/types'
+import { type BookConfig, type ShelfmadeConfig } from '@/config/types'
 
 export const CONFIG_FILE = 'shelfmade.config.ts'
+export const BOOK_CONFIG_FILE = 'book.config.ts'
 
 // Imports of these always resolve to Shelfmade's own copies, so a book project
 // renders with exactly one React no matter how Shelfmade is installed
@@ -35,9 +36,42 @@ export async function loadConfig(root: string): Promise<LoadedConfig> {
     throw new Error(`No ${CONFIG_FILE} found in ${root}`)
   }
 
+  const result = await bundleModule(root, configPath)
+  const config = importBundle(root, result.text)
+  if (typeof config !== 'object' || config === null) {
+    throw new Error(`${CONFIG_FILE} must export default defineConfig({ … })`)
+  }
+
+  return {
+    config: config as ShelfmadeConfig,
+    dependencies: Object.keys(result.inputs).map((input) => resolve(root, input)),
+  }
+}
+
+// A missing book.config.ts is fine; a missing root config is not
+export async function loadBookConfig(root: string, dir: string): Promise<BookConfig | undefined> {
+  const configPath = join(dir, BOOK_CONFIG_FILE)
+
+  if (!existsSync(configPath)) {
+    return undefined
+  }
+
+  const result = await bundleModule(root, configPath)
+  const config = importBundle(root, result.text)
+  if (typeof config !== 'object' || config === null) {
+    throw new Error(`${BOOK_CONFIG_FILE} must export default defineBookConfig({ … })`)
+  }
+
+  return config as BookConfig
+}
+
+async function bundleModule(
+  root: string,
+  entryPath: string,
+): Promise<{ text: string; inputs: string[] }> {
   const result = await build({
     absWorkingDir: root,
-    entryPoints: [configPath],
+    entryPoints: [entryPath],
     bundle: true,
     write: false,
     metafile: true,
@@ -59,18 +93,10 @@ export async function loadConfig(root: string): Promise<LoadedConfig> {
 
   const [output] = result.outputFiles
   if (!output) {
-    throw new Error(`Bundling ${CONFIG_FILE} produced no output`)
+    throw new Error(`Bundling ${entryPath} produced no output`)
   }
 
-  const config = importBundle(root, output.text)
-  if (typeof config !== 'object' || config === null || !('books' in config)) {
-    throw new Error(`${CONFIG_FILE} must export default defineConfig({ books: { … } })`)
-  }
-
-  return {
-    config: config as ShelfmadeConfig,
-    dependencies: Object.keys(result.metafile.inputs).map((input) => resolve(root, input)),
-  }
+  return { text: output.text, inputs: Object.keys(result.metafile.inputs) }
 }
 
 // The bundle is written inside the project's node_modules so the imports left

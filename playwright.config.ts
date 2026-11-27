@@ -1,5 +1,16 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const bookIntegrationTests = [
+  /tests\/books\/book-order-reorder\.spec\.ts/,
+  /tests\/books\/book-order-concurrent-write\.spec\.ts/,
+  /tests\/books\/book-chapter-create\.spec\.ts/,
+  /tests\/books\/book-chapter-delete\.spec\.ts/,
+  /tests\/books\/book-chapter-rename\.spec\.ts/,
+  /tests\/books\/book-create\.spec\.ts/,
+  /tests\/books\/book-delete\.spec\.ts/,
+  /tests\/editor\/.*\.spec\.ts/,
+]
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -15,6 +26,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: bookIntegrationTests,
       use: {
         ...devices['Desktop Chrome'],
         // The Docker image installs full Chromium rather than the headless shell.
@@ -25,6 +37,23 @@ export default defineConfig({
     },
     {
       name: 'firefox',
+      testIgnore: bookIntegrationTests,
+      use: devices['Desktop Firefox'],
+    },
+    {
+      name: 'chromium-book-integration',
+      testMatch: bookIntegrationTests,
+      workers: 1,
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: 'chromium',
+        launchOptions: { args: ['--allow-file-access-from-files'] },
+      },
+    },
+    {
+      name: 'firefox-book-integration',
+      testMatch: bookIntegrationTests,
+      workers: 1,
       use: devices['Desktop Firefox'],
     },
   ],

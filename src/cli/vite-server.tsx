@@ -1,14 +1,25 @@
-import { createReadStream, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  createReadStream,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  truncateSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { type IncomingMessage, type ServerResponse } from 'node:http'
-import { extname, resolve } from 'node:path'
+import { dirname, extname, join, resolve } from 'node:path'
 import mdx from '@mdx-js/rollup'
 import react from '@vitejs/plugin-react'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { createServer, type Plugin, type ViteDevServer } from 'vite'
 
-import { resolveBooksViaVite } from '@/engine/books'
-import { renderPageSize, renderTopbar } from '@/engine/document'
+import { slugify } from '@/cli/init'
+import { resolveBooksViaVite, withOrder, withOrderLock, withTitle } from '@/engine/books'
+import { renderDocument, renderTopbar } from '@/engine/document'
 import { PAGED_POLYFILL, RUNTIME_DIR } from '@/engine/render'
 
 // src/ next to dist/ when built, or this package's own src/ in dev
@@ -17,6 +28,19 @@ const PACKAGE_ROOT = resolve(__dirname, '../..')
 
 // Collapses a burst of module-invalidation events into one remount; not book-project configurable
 const PREVIEW_REMOUNT_DEBOUNCE_MS = 200
+
+// Swallows chokidar's own unlink once deleteChapter has already front-run it for that path
+const suppressedUnlinks = new WeakMap<ViteDevServer, Set<string>>()
+
+function installUnlinkSuppression(server: ViteDevServer) {
+  const suppressed = new Set<string>()
+  suppressedUnlinks.set(server, suppressed)
+  const realEmit = server.watcher.emit.bind(server.watcher)
+  server.watcher.emit = ((event: string, ...args: unknown[]) => {
+    if (event === 'unlink' && suppressed.delete(args[0] as string)) return true
+    return realEmit(event, ...args)
+  }) as typeof server.watcher.emit
+}
 
 // Served as-is, bypassing Vite's transform pipeline
 const MIME_TYPES: Record<string, string> = {
@@ -87,6 +111,8 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     ],
   })
 
+  installUnlinkSuppression(server)
+
   server.middlewares.use((request, response, next) => {
     if (request.method !== 'GET' || (request.url !== '/' && request.url !== '/index.html')) {
       next()
@@ -96,6 +122,86 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     serveIndexPage(server, root, request.url).then(
       (html) => {
         response.setHeader('Content-Type', 'text/html')
+        response.end(html)
+      },
+      (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  // Body-only SSR, for re-paginating a cached frame without reloading it
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'GET' ? /^\/([^/]+)-preview-body$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    servePreviewBody(server, root, slug).then(
+      (html) => {
+        if (html === null) {
+          response.statusCode = 404
+          response.end('Not found')
+          return
+        }
+
+        response.setHeader('Content-Type', 'text/html')
+        response.setHeader('Cache-Control', 'no-store')
+        response.end(html)
+      },
+      (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  // Fresh chapter snapshot, for the editor pane to re-sync after an external file edit
+  server.middlewares.use((request, response, next) => {
+    const match = request.method === 'GET' ? /^\/([^/]+)-chapters$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    serveChapters(server, root, slug).then(
+      (json) => {
+        if (json === null) {
+          response.statusCode = 404
+          response.end('Not found')
+          return
+        }
+
+        response.setHeader('Content-Type', 'application/json')
+        response.setHeader('Cache-Control', 'no-store')
+        response.end(json)
+      },
+      (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  // Scriptless shell for the frame that only displays already-paginated content
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'GET' ? /^\/([^/]+)-display-frame$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    serveDisplayFrame(server, root, slug).then(
+      (html) => {
+        if (html === null) {
+          response.statusCode = 404
+          response.end('Not found')
+          return
+        }
+
+        response.setHeader('Content-Type', 'text/html')
+        response.setHeader('Cache-Control', 'no-store')
         response.end(html)
       },
       (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
@@ -120,6 +226,34 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
         }
 
         response.setHeader('Content-Type', 'text/html')
+        response.end(html)
+      },
+      (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  // Flat path - renderDocument's relative hrefs only resolve one segment deep
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'GET' ? /^\/([^/]+)-preview-frame$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    servePreviewFrame(server, root, slug).then(
+      (html) => {
+        if (html === null) {
+          response.statusCode = 404
+          response.end('Not found')
+          return
+        }
+
+        response.setHeader('Content-Type', 'text/html')
+        // Guard against a stale cached response
+        response.setHeader('Cache-Control', 'no-store')
         response.end(html)
       },
       (error: unknown) => next(error instanceof Error ? error : new Error(String(error))),
@@ -175,6 +309,97 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
     )
   })
 
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'DELETE'
+        ? /^\/books\/([^/]+)\/chapters\/([^/]+)$/.exec(request.url ?? '')
+        : null
+    const [, slug, chapterSlug] = match ?? []
+
+    if (slug === undefined || chapterSlug === undefined) {
+      next()
+      return
+    }
+
+    deleteChapter(server, root, slug, chapterSlug, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'PUT'
+        ? /^\/books\/([^/]+)\/chapters\/([^/]+)\/order$/.exec(request.url ?? '')
+        : null
+    const [, slug, chapterSlug] = match ?? []
+
+    if (slug === undefined || chapterSlug === undefined) {
+      next()
+      return
+    }
+
+    reorderChapter(server, root, slug, chapterSlug, request, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'PUT'
+        ? /^\/books\/([^/]+)\/chapters\/([^/]+)\/title$/.exec(request.url ?? '')
+        : null
+    const [, slug, chapterSlug] = match ?? []
+
+    if (slug === undefined || chapterSlug === undefined) {
+      next()
+      return
+    }
+
+    renameChapter(server, root, slug, chapterSlug, request, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  server.middlewares.use((request, response, next) => {
+    const match =
+      request.method === 'POST' ? /^\/books\/([^/]+)\/chapters$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    createChapter(server, root, slug, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  server.middlewares.use((request, response, next) => {
+    if (request.method !== 'POST' || request.url !== '/books') {
+      next()
+      return
+    }
+
+    createBook(root, request, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
+  server.middlewares.use((request, response, next) => {
+    const match = request.method === 'DELETE' ? /^\/books\/([^/]+)$/.exec(request.url ?? '') : null
+    const [, slug] = match ?? []
+
+    if (slug === undefined) {
+      next()
+      return
+    }
+
+    deleteBook(server, root, slug, response).catch((error: unknown) =>
+      next(error instanceof Error ? error : new Error(String(error))),
+    )
+  })
+
   await server.listen()
   server.printUrls()
 
@@ -197,6 +422,8 @@ function serveFile(path: string, response: ServerResponse, next: () => void) {
 
   const contentType = MIME_TYPES[extname(path)]
   if (contentType) response.setHeader('Content-Type', contentType)
+  // Guard against a stale cached response, same as the HTML-serving route
+  response.setHeader('Cache-Control', 'no-store')
   createReadStream(path).pipe(response)
 }
 
@@ -238,9 +465,289 @@ async function saveChapter(
   }
 
   const content = await readRequestBody(request)
-  writeFileSync(chapter.path, content)
+  // Plain writeFileSync would recreate a concurrently-deleted file instead of failing
+  if (
+    !writeExistingFile(chapter.path, () => {
+      writeFileSync(chapter.path, content, { flag: 'r+' })
+      truncateSync(chapter.path, Buffer.byteLength(content))
+    })
+  ) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
   response.statusCode = 204
   response.end()
+}
+
+// Closes the delete-during-write race: the file may vanish between the earlier existence check and this write
+export function writeExistingFile(path: string, write: () => void): boolean {
+  try {
+    write()
+    return true
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false
+    throw error
+  }
+}
+
+async function deleteChapter(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  chapterSlug: string,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+  const chapter = book?.chapters.find((candidate) => candidate.slug === chapterSlug)
+
+  if (!book || !chapter) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  const contentDir = dirname(chapter.path)
+  const deleted = await withOrderLock(contentDir, async () => {
+    // A concurrent delete of the same chapter may have already won the lock
+    if (!writeExistingFile(chapter.path, () => unlinkSync(chapter.path))) return false
+
+    // Front-run chokidar's async pickup so HMR invalidation can't race a later navigation
+    server.watcher.emit('unlink', chapter.path)
+    // Chokidar still detects the same unlink moments later; suppress that redundant repeat
+    suppressedUnlinks.get(server)?.add(chapter.path)
+
+    // Re-read inside the lock - a concurrent reorder/delete may have changed order since the snapshot above
+    const freshChapters =
+      (await resolveBooksViaVite(server, root)).find((candidate) => candidate.slug === slug)
+        ?.chapters ?? []
+
+    // This route only ever runs via the dev server, which always backfills order
+    const remaining = freshChapters
+      .filter((candidate) => candidate.slug !== chapterSlug)
+      .sort((a, b) => a.order! - b.order!)
+
+    remaining.forEach((candidate, index) => {
+      const newOrder = index + 1
+      if (candidate.order === newOrder) return
+      writeFileSync(candidate.path, withOrder(readFileSync(candidate.path, 'utf-8'), newOrder))
+    })
+    return true
+  })
+
+  if (!deleted) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  await respondWithChapters(server, root, slug, response, 200)
+}
+
+async function reorderChapter(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  chapterSlug: string,
+  request: IncomingMessage,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+  const chapter = book?.chapters.find((candidate) => candidate.slug === chapterSlug)
+
+  if (!book || !chapter) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  const targetOrder = Number(await readRequestBody(request))
+  if (!Number.isInteger(targetOrder) || targetOrder < 1 || targetOrder > book.chapters.length) {
+    response.statusCode = 400
+    response.end('Invalid order')
+    return
+  }
+
+  const contentDir = dirname(chapter.path)
+  await withOrderLock(contentDir, async () => {
+    // Re-read inside the lock - a concurrent reorder/delete may have changed order since the snapshot above
+    const freshChapters =
+      (await resolveBooksViaVite(server, root)).find((candidate) => candidate.slug === slug)
+        ?.chapters ?? []
+
+    // This route only ever runs via the dev server, which always backfills order
+    const ordered = [...freshChapters].sort((a, b) => a.order! - b.order!)
+    const fromIndex = ordered.findIndex((candidate) => candidate.slug === chapterSlug)
+    // chapterSlug may no longer be present if a concurrent delete removed it; nothing to reorder then
+    if (fromIndex === -1) return
+    const moved = ordered.splice(fromIndex, 1)[0]!
+    ordered.splice(targetOrder - 1, 0, moved)
+
+    ordered.forEach((candidate, index) => {
+      const newOrder = index + 1
+      if (candidate.order === newOrder) return
+      writeFileSync(candidate.path, withOrder(readFileSync(candidate.path, 'utf-8'), newOrder))
+    })
+  })
+
+  await respondWithChapters(server, root, slug, response, 200)
+}
+
+const MAX_TITLE_LENGTH = 200
+
+async function renameChapter(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  chapterSlug: string,
+  request: IncomingMessage,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+  const chapter = book?.chapters.find((candidate) => candidate.slug === chapterSlug)
+
+  if (!chapter) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  const title = (await readRequestBody(request)).trim()
+
+  if (title === '') {
+    response.statusCode = 400
+    response.end('Title is required')
+    return
+  }
+  if (title.length > MAX_TITLE_LENGTH) {
+    response.statusCode = 400
+    response.end(`Title must be ${MAX_TITLE_LENGTH} characters or fewer`)
+    return
+  }
+
+  const renamed = writeExistingFile(chapter.path, () => {
+    writeFileSync(chapter.path, withTitle(readFileSync(chapter.path, 'utf-8'), title))
+  })
+  if (!renamed) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+  await respondWithChapters(server, root, slug, response, 200)
+}
+
+const DEFAULT_CHAPTER_TITLE = 'Untitled chapter'
+
+async function createChapter(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  const contentDir = join(book.dir, 'content')
+
+  await withOrderLock(contentDir, () => {
+    const chapterSlug = `chapter-${nextChapterIndex(contentDir)}`
+    const nextOrder = Math.max(0, ...book.chapters.map((candidate) => candidate.order ?? 0)) + 1
+    const source = withTitle(withOrder('', nextOrder), DEFAULT_CHAPTER_TITLE)
+    writeFileSync(join(contentDir, `${chapterSlug}.mdx`), source)
+  })
+
+  await respondWithChapters(server, root, slug, response, 201)
+}
+
+async function createBook(root: string, request: IncomingMessage, response: ServerResponse) {
+  const title = (await readRequestBody(request)).trim()
+
+  if (title === '') {
+    response.statusCode = 400
+    response.end('Title is required')
+    return
+  }
+  if (title.length > MAX_TITLE_LENGTH) {
+    response.statusCode = 400
+    response.end(`Title must be ${MAX_TITLE_LENGTH} characters or fewer`)
+    return
+  }
+
+  const booksDir = resolve(root, 'books')
+  mkdirSync(booksDir, { recursive: true })
+
+  const slug = createBookDir(booksDir, slugify(title))
+  mkdirSync(join(booksDir, slug, 'content'))
+  writeFileSync(join(booksDir, slug, 'book.json'), `${JSON.stringify({ title }, null, 2)}\n`)
+
+  response.statusCode = 201
+  response.setHeader('Content-Type', 'application/json')
+  response.end(JSON.stringify({ slug, title }))
+}
+
+async function deleteBook(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  response: ServerResponse,
+) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) {
+    response.statusCode = 404
+    response.end('Not found')
+    return
+  }
+
+  rmSync(book.dir, { recursive: true, force: true })
+
+  response.statusCode = 204
+  response.end()
+}
+
+// mkdirSync doubles as the atomic uniqueness check, closing the race between checking and creating
+export function createBookDir(booksDir: string, base: string): string {
+  let slug = base
+  let suffix = 2
+
+  while (true) {
+    // 'index' is reserved for the books listing route
+    if (slug !== 'index') {
+      try {
+        mkdirSync(join(booksDir, slug))
+        return slug
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+      }
+    }
+    slug = `${base}-${suffix++}`
+  }
+}
+
+// Remembers indices used per content dir so a deleted chapter's path is never reused mid-process
+const chapterIndexHighWaterMarks = new Map<string, number>()
+
+// Only avoids colliding with other chapter-N files - unrelated to chapters named otherwise
+function nextChapterIndex(contentDir: string): number {
+  const indices = readdirSync(contentDir)
+    .map((file) => /^chapter-(\d+)\.mdx$/.exec(file)?.[1])
+    .filter((digits): digits is string => digits !== undefined)
+    .map(Number)
+
+  const diskMax = indices.length > 0 ? Math.max(...indices) : 0
+  const next = Math.max(diskMax, chapterIndexHighWaterMarks.get(contentDir) ?? 0) + 1
+  chapterIndexHighWaterMarks.set(contentDir, next)
+  return next
 }
 
 function readRequestBody(request: IncomingMessage): Promise<string> {
@@ -252,27 +759,47 @@ function readRequestBody(request: IncomingMessage): Promise<string> {
   })
 }
 
+// Re-reads from disk so the response reflects any order/title rewrites the mutation just made
+async function respondWithChapters(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+  response: ServerResponse,
+  statusCode: number,
+) {
+  const json = await serveChapters(server, root, slug)
+  response.statusCode = statusCode
+  response.setHeader('Content-Type', 'application/json')
+  response.end(json ?? '[]')
+}
+
+// Same shape as __SHELFMADE_CHAPTERS_JSON__ in serveBookPage, re-read fresh from disk
+async function serveChapters(
+  server: ViteDevServer,
+  root: string,
+  slug: string,
+): Promise<string | null> {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) return null
+
+  return JSON.stringify(book.chapters.map(({ slug, title, content }) => ({ slug, title, content })))
+}
+
 async function serveBookPage(server: ViteDevServer, root: string, slug: string, url: string) {
   const books = await resolveBooksViaVite(server, root)
   const book = books.find((candidate) => candidate.slug === slug)
 
   if (!book) return null
 
-  const { App } = book
   const { renderBookBody } = await server.ssrLoadModule(resolve(SRC_DIR, 'client/render-book.tsx'))
-  const body = renderBookBody(App)
-  const stylesheets = readdirSync(book.dir)
-    .filter((file) => file.endsWith('.css'))
-    .sort()
-    .map((file) => `<link rel="stylesheet" href="books/${slug}/${file}" />`)
-    .join('\n    ')
+  const body = renderBookBody()
   const template = readFileSync(resolve(SRC_DIR, 'client/book.html'), 'utf-8')
 
   const html = fillTemplate(template, {
     __SHELFMADE_LANG__: book.lang,
     __SHELFMADE_TITLE__: book.documentTitle,
-    __SHELFMADE_PAGE_SIZE__: renderPageSize(book.pageSize),
-    __SHELFMADE_STYLESHEETS__: stylesheets,
     __SHELFMADE_BOOK_ROOT__: body,
     __SHELFMADE_TOPBAR__: renderTopbar('Visual Editor'),
     // path is the save route's write target - server-side only, never sent to the browser
@@ -286,6 +813,65 @@ async function serveBookPage(server: ViteDevServer, root: string, slug: string, 
 
   // transformIndexHtml also injects Vite's HMR client, intercepted once remount logic lands
   return server.transformIndexHtml(url, html)
+}
+
+// Empty body - the client always fills it via repaginate()/servePreviewBody, never auto-pagination's output
+async function servePreviewFrame(server: ViteDevServer, root: string, slug: string) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) return null
+
+  const { documentTitle, lang, pageSize, dir } = book
+  const stylesheets = readdirSync(dir)
+    .filter((file) => file.endsWith('.css'))
+    .sort()
+    .map((file) => `books/${slug}/${file}`)
+
+  return renderDocument(
+    { title: documentTitle, lang, pageSize, stylesheets, autoPaginate: false },
+    '',
+  )
+}
+
+// Same SSR as servePreviewFrame, minus the document shell
+async function servePreviewBody(server: ViteDevServer, root: string, slug: string) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) return null
+
+  const { renderPreviewFrameBody } = await server.ssrLoadModule(
+    resolve(SRC_DIR, 'client/render-preview-frame.tsx'),
+  )
+  return renderPreviewFrameBody(book.App)
+}
+
+// Scriptless shell - this frame only displays pages already paginated by the compute frame.
+// Gets the dev-only zoom (preview-frame.css) since it's the one the user actually sees
+async function serveDisplayFrame(server: ViteDevServer, root: string, slug: string) {
+  const books = await resolveBooksViaVite(server, root)
+  const book = books.find((candidate) => candidate.slug === slug)
+
+  if (!book) return null
+
+  const { documentTitle, lang, pageSize, dir } = book
+  const stylesheets = readdirSync(dir)
+    .filter((file) => file.endsWith('.css'))
+    .sort()
+    .map((file) => `books/${slug}/${file}`)
+
+  return renderDocument(
+    {
+      title: documentTitle,
+      lang,
+      pageSize,
+      stylesheets,
+      screenStylesheets: ['shelfmade/preview-frame.css'],
+      includeScripts: false,
+    },
+    '',
+  )
 }
 
 async function serveIndexPage(server: ViteDevServer, root: string, url: string) {

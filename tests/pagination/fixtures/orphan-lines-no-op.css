@@ -1,0 +1,15 @@
+/* The first page fits two lines of the target paragraph. */
+@page {
+  size: 300px 140px;
+  margin: 0;
+}
+
+@page :first {
+  size: 300px 60px;
+  margin: 0;
+}
+
+p {
+  font-size: 14px;
+  line-height: 20px;
+}

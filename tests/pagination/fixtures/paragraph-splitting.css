@@ -1,0 +1,10 @@
+/* The page height falls between line boundaries, so only four complete lines fit. */
+@page {
+  size: 300px 90px;
+  margin: 0;
+}
+
+p {
+  font-size: 14px;
+  line-height: 20px;
+}

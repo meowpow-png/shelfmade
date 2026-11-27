@@ -5,6 +5,28 @@
 - npm account with publish access, logged in (`npm whoami`)
 - push access to `main` on the GitHub repo
 
+## Changelog entries
+
+- Keep entries short and specific
+- Describe the user-facing outcome, not the implementation
+- Use: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`
+- Clearly flag breaking changes and required migration steps
+
+**Include:**
+
+- User-visible features
+- Behavior changes
+- Bug fixes
+- Compatibility changes
+- Deprecations, removals, and security fixes
+
+**Exclude:**
+
+- Internal refactors
+- Tests and CI
+- Dependency updates
+- Formatting and docs-only work, unless users are affected
+
 ## Process
 
 1. Turn `[Unreleased]` in `CHANGELOG.md` into `[X.Y.Z] - <date>`

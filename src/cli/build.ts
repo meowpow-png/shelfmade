@@ -7,7 +7,7 @@ import { renderBooks } from '@/engine/render'
 
 export async function build(root: string) {
   const { config } = await loadConfig(root)
-  const books = resolveBooks(config, root)
+  const books = await resolveBooks(config, root)
   const outDir = join(root, 'dist')
 
   renderBooks(books, outDir)

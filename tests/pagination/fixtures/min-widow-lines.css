@@ -1,0 +1,10 @@
+/* Five lines fit, initially leaving one line on the next page. */
+@page {
+  size: 300px 100px;
+  margin: 0;
+}
+
+p {
+  font-size: 14px;
+  line-height: 20px;
+}

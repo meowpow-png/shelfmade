@@ -1,0 +1,18 @@
+@page {
+  size: 300px 200px;
+  margin: 0;
+}
+
+p,
+h2 {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+h2 {
+  margin-top: 20px;
+}
+
+.page-start {
+  break-before: page;
+}

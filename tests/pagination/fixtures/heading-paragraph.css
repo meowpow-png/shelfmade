@@ -1,0 +1,17 @@
+/* The first page fits the heading with only one paragraph line.
+   Later pages are taller so the moved content fits together. */
+@page {
+  size: 300px 160px;
+  margin: 0;
+}
+
+@page :first {
+  size: 300px 60px;
+  margin: 0;
+}
+
+p,
+h2 {
+  font-size: 14px;
+  line-height: 20px;
+}

@@ -67,25 +67,25 @@ npm test
 just test
 ```
 
-## Sample book
+## Example book
 
 `examples/sample-book/` is a book project structured like a real one, linked to this repository with a `file:` dependency. Preview it at `http://localhost:8080` with live reload:
 
 ```sh
-npm run sample
+npm run example
 ```
 
 Render it with the CLI only, without serving:
 
 ```sh
-npm run sample:build
+npm run example:build
 ```
 
 Print it to PDF, on your machine or in the Playwright container, writing into `examples/sample-book/dist/`:
 
 ```sh
-npm run sample:pdf
-just sample-pdf
+npm run example:pdf
+just example-pdf
 ```
 
 To try `init` before Shelfmade is published, pass `--link`: the new project depends on this checkout through a `file:` link instead of the npm release:

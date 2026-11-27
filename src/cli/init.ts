@@ -22,8 +22,8 @@ export function init(root: string, link: boolean) {
   const pkg = JSON.parse(readFileSync(join(PACKAGE_ROOT, 'package.json'), 'utf-8')) as PackageJson
   const values: Record<string, string> = {
     slug,
-    // Escaped for the single-quoted string in shelfmade.config.ts
-    title: title(name, slug).replace(/[\\']/g, '\\$&'),
+    // Escaped for the JSON string in book.json
+    title: title(name, slug).replace(/[\\"]/g, '\\$&'),
     // A link points at this checkout, for trying Shelfmade before it's published
     shelfmade: link ? `file:${linkPath(root)}` : `^${pkg.version}`,
     typesReact: pkg.devDependencies['@types/react'] ?? 'latest',
@@ -79,12 +79,12 @@ function linkPath(root: string) {
   return path.length < PACKAGE_ROOT.length ? path : PACKAGE_ROOT
 }
 
-function slugify(name: string) {
+export function slugify(name: string) {
   const slug = name
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-|-$/g, '')
   return slug || 'my-book'
 }

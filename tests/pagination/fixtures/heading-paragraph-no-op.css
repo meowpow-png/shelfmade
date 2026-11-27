@@ -1,0 +1,16 @@
+/* The first page fits the heading with two paragraph lines. */
+@page {
+  size: 300px 160px;
+  margin: 0;
+}
+
+@page :first {
+  size: 300px 80px;
+  margin: 0;
+}
+
+p,
+h2 {
+  font-size: 14px;
+  line-height: 20px;
+}

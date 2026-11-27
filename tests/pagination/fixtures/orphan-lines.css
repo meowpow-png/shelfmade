@@ -1,0 +1,16 @@
+/* The first page fits only one line of the target paragraph.
+   Later pages are taller so the moved paragraph fits whole. */
+@page {
+  size: 300px 140px;
+  margin: 0;
+}
+
+@page :first {
+  size: 300px 40px;
+  margin: 0;
+}
+
+p {
+  font-size: 14px;
+  line-height: 20px;
+}

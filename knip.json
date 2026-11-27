@@ -5,8 +5,8 @@
     "src/client/book-page.tsx",
     "src/client/index-page.tsx",
     "src/client/render-index.tsx",
-    "src/client/render-book.tsx"
+    "src/client/render-book.tsx",
+    "src/client/render-preview-frame.tsx"
   ],
-  "ignore": ["examples/**", "template/**"],
-  "ignoreUnresolved": ["^/shelfmade\\.config\\.ts$"]
+  "ignore": ["examples/**", "template/**"]
 }

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-27
+
+### Added
+
+- Create and delete books from the index page
+- Collapsible chapter sidebar for adding, renaming, reordering, and deleting chapters
+- Empty-book editor state with a shortcut to add the first chapter
+- Warning and reload option when an open chapter changes outside Shelfmade
+- Support for non-Latin book titles
+
+### Changed
+
+- Books are discovered from `books/<slug>/` directories
+- Move book metadata to `book.json`, with optional layouts and components in `book.config.ts`
+
+### Fixed
+
+- Firefox previews stalling during pagination
+- Previews remounting incorrectly after rapid changes
+- Book styles leaking into the editor interface
+
 ## [0.2.1] - 2026-11-22
 
 ### Fixed
@@ -44,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for multiple books and stylesheets in one project
 - MIT licence
 
-[Unreleased]: https://github.com/meowpow-png/shelfmade/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/meowpow-png/shelfmade/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/meowpow-png/shelfmade/releases/tag/v0.3.0
 [0.2.1]: https://github.com/meowpow-png/shelfmade/releases/tag/v0.2.1
 [0.2.0]: https://github.com/meowpow-png/shelfmade/releases/tag/v0.2.0
 [0.1.0]: https://github.com/meowpow-png/shelfmade/releases/tag/v0.1.0

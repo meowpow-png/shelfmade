@@ -1,3 +1,9 @@
+:root {
+  --editor-font-size: 17px;
+  --editor-text-color: #292929;
+  --editor-surface-background: #fff;
+}
+
 body {
   display: flex;
   flex-direction: column;
@@ -10,54 +16,505 @@ body {
   display: flex;
   flex: 1;
 
-  /* Without this, the row refuses to shrink below its content's height
-     (flex items default to min-height: auto along the column's main axis),
-     so .preview's overflow would never kick in - it'd just grow past 100vh instead */
+  /* Flex items default to min-height: auto, which would let this grow past 100vh */
   min-height: 0;
 }
 
 #editor-root {
-  width: 50%;
+  flex: 1 1 0%;
+  min-width: 0;
   overflow-y: auto;
-  background: var(--color-background);
+  background: var(--editor-surface-background);
+
+  /* Explicit base for em-sized values inside here (e.g. ChapterTitle in Editor.tsx) */
+  font-size: var(--editor-font-size);
 }
 
 .editor {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 32px;
+  padding: 48px 40px;
+}
+
+.editor:has(> .editor-empty-state) {
+  position: relative;
+  min-height: 100%;
+}
+
+.editor-chapter-wrapper {
+  border-top: 1px solid var(--color-divider);
+}
+
+.editor-chapter-wrapper:first-child {
+  border-top: none;
 }
 
 .editor-chapter {
   box-sizing: border-box;
   width: 100%;
   min-height: 320px;
-  padding: 16px;
-  border: 1px solid var(--color-divider);
+  padding: 32px 0;
+}
+
+.editor-chapter-wrapper:first-child .editor-chapter {
+  padding-top: 0;
+}
+
+.editor-conflict-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 32px;
+  margin-bottom: 16px;
+  background: var(--color-info-background);
+  color: var(--color-info);
+  font-family: var(--font-sans);
+  font-size: 0.85em;
+}
+
+.editor-conflict-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.editor-conflict-banner-actions button {
+  border: 1px solid var(--color-info);
+  background: transparent;
+  color: var(--color-info);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-family: var(--font-sans);
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.editor-chapter-title {
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.7;
+  max-width: 680px;
+  margin: 0 auto 16px;
+}
+
+.editor-empty-state {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+  font-size: 17px;
+}
+
+.editor-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 26px;
   border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.editor-empty-icon svg {
+  width: 36px;
+  height: 36px;
+}
+
+.editor-empty-title {
+  margin: 0;
+  font-size: 1.3em;
+  font-weight: 700;
   color: var(--color-text-primary);
-  font-family: monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  resize: vertical;
+}
+
+.editor-empty-description {
+  margin: 10px 0 24px;
+  font-size: 1em;
+  color: var(--color-text-secondary);
+}
+
+.editor-empty-add {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 20px;
+  background: var(--color-text-primary);
+  color: var(--color-background);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.editor-empty-add:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .preview {
-  width: 50%;
-  display: flex;
-
-  /* Plain "center" clips overflowing content on the start side and makes it
-     unreachable by scrolling - "safe" falls back to start-alignment once the
-     content overflows, so every page stays reachable */
-  align-items: safe center;
-  overflow-y: auto;
+  flex: 1 1 0%;
+  min-width: 0;
   background: var(--color-text-primary);
 }
 
+/* Just a host for the iframe book-page.tsx inserts */
 #book-root {
-  display: flex;
-  justify-content: center;
+  position: relative;
   width: 100%;
-  padding: 48px 32px 43px;
+  height: 100%;
+}
+
+.activity-bar {
+  width: 64px;
+  height: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0;
+  background: var(--color-background);
+  border-right: 1px solid var(--color-divider);
+}
+
+.activity-bar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  outline: none;
+}
+
+.activity-bar-icon:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.activity-bar-icon:hover:not([aria-pressed='true']) {
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  color: var(--color-text-primary);
+}
+
+.activity-bar-icon[aria-pressed='true'] {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.activity-bar-icon-glyph {
+  display: inline-flex;
+}
+
+.activity-bar-icon-glyph svg {
+  width: 26px;
+  height: 26px;
+}
+
+.chapter-nav {
+  width: 300px;
+  height: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding: 24px 20px;
+  overflow-y: auto;
+  background: var(--color-background);
+  border-right: 1px solid var(--color-divider);
+  font-family: var(--font-sans);
+}
+
+.chapter-nav-header {
+  display: flex;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.chapter-nav-icon {
+  display: inline-flex;
+  position: relative;
+  top: 1px;
+  margin-right: 16px;
+  color: var(--color-text-primary);
+}
+
+.chapter-nav-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.chapter-nav-title {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.chapter-nav-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+}
+
+.chapter-nav-add:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.chapter-nav-add[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.chapter-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chapter-nav-row {
+  position: relative;
+}
+
+.chapter-nav-item {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 36px 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.1s ease;
+}
+
+.chapter-nav-item:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+/* :has() keeps the highlight once the mouse leaves for the portal-rendered open menu */
+.chapter-nav-row:hover .chapter-nav-item:not([aria-current='true']),
+.chapter-nav-row:has(.row-menu-trigger[data-state='open'])
+  .chapter-nav-item:not([aria-current='true']) {
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+}
+
+.chapter-nav-item[aria-current='true'] {
+  background: var(--color-surface);
+  font-weight: 600;
+}
+
+.chapter-nav-dragging {
+  opacity: 0.5;
+}
+
+.chapter-nav-rename {
+  background: var(--color-surface);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.row-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  outline: none;
+  transition: opacity 0.1s ease;
+}
+
+.row-menu-trigger:hover,
+.row-menu-trigger[data-state='open'] {
+  color: var(--color-text-primary);
+}
+
+.row-menu-trigger:disabled {
+  cursor: default;
+}
+
+.row-menu-trigger:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+/* Selection alone must not reveal the dots, and a disabled trigger never reveals at all */
+.row-menu-trigger:focus-visible,
+.row-menu-trigger[data-state='open'],
+.chapter-nav-row:hover .row-menu-trigger:not(:disabled) {
+  opacity: 1;
+}
+
+.row-menu-icon {
+  display: inline-flex;
+}
+
+.row-menu-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.row-menu-content {
+  min-width: 140px;
+  padding: 4px;
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  background: var(--color-background);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+  font-family: var(--font-sans);
+}
+
+.row-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+  outline: none;
+}
+
+.row-menu-item[data-highlighted] {
+  background: var(--color-surface);
+}
+
+.row-menu-item-destructive {
+  color: var(--color-danger);
+}
+
+.row-menu-item-destructive[data-highlighted] {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+.row-menu-item-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.row-menu-item-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.chapter-delete-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+}
+
+.chapter-delete-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: 8px;
+  background: var(--color-background);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+  font-family: var(--font-sans);
+  transform: translate(-50%, -50%);
+
+  /* Holds focus on open instead of Cancel, so it must not show its own ring */
+  outline: none;
+}
+
+.chapter-delete-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.chapter-delete-description {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.chapter-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.chapter-delete-cancel,
+.chapter-delete-confirm {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.chapter-delete-cancel {
+  background: color-mix(in srgb, var(--color-surface) 80%, var(--color-background));
+  color: var(--color-text-primary);
+}
+
+.chapter-delete-cancel:hover {
+  background: color-mix(in srgb, var(--color-surface) 90%, black);
+}
+
+.chapter-delete-confirm {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.chapter-delete-confirm:hover {
+  background: color-mix(in srgb, var(--color-danger) 85%, black);
+}
+
+.chapter-delete-cancel:focus-visible,
+.chapter-delete-confirm:focus-visible {
+  box-shadow: var(--focus-ring);
 }

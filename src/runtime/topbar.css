@@ -5,6 +5,8 @@
   padding: 20px 32px;
   background: var(--color-background);
   border-bottom: 1px solid var(--color-divider);
+  font-family: var(--font-sans);
+  line-height: normal;
 }
 
 .topbar-wordmark {

@@ -1,0 +1,8 @@
+/* Dev-only zoom for the editor's live preview iframe */
+:root {
+  --preview-zoom-level: 1.2;
+}
+
+body {
+  zoom: var(--preview-zoom-level);
+}

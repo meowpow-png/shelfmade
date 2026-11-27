@@ -1,0 +1,16 @@
+/* The first page has room for only part of the heading. */
+@page {
+  size: 300px 140px;
+  margin: 0;
+}
+
+@page :first {
+  size: 300px 60px;
+  margin: 0;
+}
+
+p,
+h2 {
+  font-size: 14px;
+  line-height: 20px;
+}
