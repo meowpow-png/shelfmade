@@ -326,7 +326,7 @@ body {
 
 /* :has() keeps the highlight once the mouse leaves for the portal-rendered open menu */
 .chapter-nav-row:hover .chapter-nav-item:not([aria-current='true']),
-.chapter-nav-row:has(.chapter-nav-menu-trigger[data-state='open'])
+.chapter-nav-row:has(.row-menu-trigger[data-state='open'])
   .chapter-nav-item:not([aria-current='true']) {
   background: color-mix(in srgb, var(--color-surface) 60%, transparent);
 }
@@ -346,7 +346,7 @@ body {
   box-shadow: var(--focus-ring);
 }
 
-.chapter-nav-menu-trigger {
+.row-menu-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -366,36 +366,36 @@ body {
   transition: opacity 0.1s ease;
 }
 
-.chapter-nav-menu-trigger:hover,
-.chapter-nav-menu-trigger[data-state='open'] {
+.row-menu-trigger:hover,
+.row-menu-trigger[data-state='open'] {
   color: var(--color-text-primary);
 }
 
-.chapter-nav-menu-trigger:disabled {
+.row-menu-trigger:disabled {
   cursor: default;
 }
 
-.chapter-nav-menu-trigger:focus-visible {
+.row-menu-trigger:focus-visible {
   box-shadow: var(--focus-ring);
 }
 
 /* Selection alone must not reveal the dots, and a disabled trigger never reveals at all */
-.chapter-nav-menu-trigger:focus-visible,
-.chapter-nav-menu-trigger[data-state='open'],
-.chapter-nav-row:hover .chapter-nav-menu-trigger:not(:disabled) {
+.row-menu-trigger:focus-visible,
+.row-menu-trigger[data-state='open'],
+.chapter-nav-row:hover .row-menu-trigger:not(:disabled) {
   opacity: 1;
 }
 
-.chapter-nav-menu-icon {
+.row-menu-icon {
   display: inline-flex;
 }
 
-.chapter-nav-menu-icon svg {
+.row-menu-icon svg {
   width: 18px;
   height: 18px;
 }
 
-.chapter-nav-menu-content {
+.row-menu-content {
   min-width: 140px;
   padding: 4px;
   border: 1px solid var(--color-divider);
@@ -405,7 +405,7 @@ body {
   font-family: var(--font-sans);
 }
 
-.chapter-nav-menu-item {
+.row-menu-item {
   padding: 8px 10px;
   border-radius: 6px;
   color: var(--color-text-primary);
@@ -415,7 +415,7 @@ body {
   outline: none;
 }
 
-.chapter-nav-menu-item[data-highlighted] {
+.row-menu-item[data-highlighted] {
   background: var(--color-surface);
 }
 
