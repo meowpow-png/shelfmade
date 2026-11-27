@@ -538,6 +538,8 @@ async function reorderChapter(
   await respondWithChapters(server, root, slug, response, 200)
 }
 
+const MAX_TITLE_LENGTH = 200
+
 async function renameChapter(
   server: ViteDevServer,
   root: string,
@@ -556,7 +558,19 @@ async function renameChapter(
     return
   }
 
-  const title = await readRequestBody(request)
+  const title = (await readRequestBody(request)).trim()
+
+  if (title === '') {
+    response.statusCode = 400
+    response.end('Title is required')
+    return
+  }
+  if (title.length > MAX_TITLE_LENGTH) {
+    response.statusCode = 400
+    response.end(`Title must be ${MAX_TITLE_LENGTH} characters or fewer`)
+    return
+  }
+
   writeFileSync(chapter.path, withTitle(readFileSync(chapter.path, 'utf-8'), title))
   await respondWithChapters(server, root, slug, response, 200)
 }
@@ -591,7 +605,19 @@ async function createChapter(
 }
 
 async function createBook(root: string, request: IncomingMessage, response: ServerResponse) {
-  const title = await readRequestBody(request)
+  const title = (await readRequestBody(request)).trim()
+
+  if (title === '') {
+    response.statusCode = 400
+    response.end('Title is required')
+    return
+  }
+  if (title.length > MAX_TITLE_LENGTH) {
+    response.statusCode = 400
+    response.end(`Title must be ${MAX_TITLE_LENGTH} characters or fewer`)
+    return
+  }
+
   const booksDir = resolve(root, 'books')
   mkdirSync(booksDir, { recursive: true })
 

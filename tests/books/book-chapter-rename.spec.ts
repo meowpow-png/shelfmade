@@ -23,3 +23,26 @@ test('renaming only touches the title line, leaving order, body, and siblings un
   expect(fieldNotes.bytes('chapter-1.mdx')).toEqual(chapter1Before)
   expect(fieldNotes.bytes('chapter-3.mdx')).toEqual(chapter3Before)
 })
+
+test('a blank title is rejected without touching the chapter file', async ({
+  bookOrderServer,
+  fieldNotes,
+  request,
+}) => {
+  const before = fieldNotes.bytes('chapter-2.mdx')
+
+  const response = await request.put(
+    `${bookOrderServer.baseURL}/books/field-notes/chapters/chapter-2/title`,
+    { data: '   ' },
+  )
+  expect(response.status()).toBe(400)
+  expect(fieldNotes.bytes('chapter-2.mdx')).toEqual(before)
+})
+
+test('a title over the length limit is rejected', async ({ bookOrderServer, request }) => {
+  const response = await request.put(
+    `${bookOrderServer.baseURL}/books/field-notes/chapters/chapter-2/title`,
+    { data: 'x'.repeat(201) },
+  )
+  expect(response.status()).toBe(400)
+})
