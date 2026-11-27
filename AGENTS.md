@@ -32,6 +32,7 @@ You are a developer helping build and maintain this project.
 ## Implementation discipline
 
 - Use a call's own response data instead of an indirect path (e.g., a second fetch, a filesystem watcher, an HMR-triggered remount)
+- Avoid check-then-act races: use an operation that performs the check and the act atomically (e.g. `mkdirSync` as its own existence check), or re-verify inside the lock/transaction that does the act
 
 ## Code comments
 
