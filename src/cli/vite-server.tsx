@@ -27,6 +27,19 @@ const PACKAGE_ROOT = resolve(__dirname, '../..')
 // Collapses a burst of module-invalidation events into one remount; not book-project configurable
 const PREVIEW_REMOUNT_DEBOUNCE_MS = 200
 
+// Swallows chokidar's own unlink once deleteChapter has already front-run it for that path
+const suppressedUnlinks = new WeakMap<ViteDevServer, Set<string>>()
+
+function installUnlinkSuppression(server: ViteDevServer) {
+  const suppressed = new Set<string>()
+  suppressedUnlinks.set(server, suppressed)
+  const realEmit = server.watcher.emit.bind(server.watcher)
+  server.watcher.emit = ((event: string, ...args: unknown[]) => {
+    if (event === 'unlink' && suppressed.delete(args[0] as string)) return true
+    return realEmit(event, ...args)
+  }) as typeof server.watcher.emit
+}
+
 // Served as-is, bypassing Vite's transform pipeline
 const MIME_TYPES: Record<string, string> = {
   '.css': 'text/css',
@@ -95,6 +108,8 @@ export async function startViteServer(root: string, port: number): Promise<ViteD
       mdx({ remarkPlugins: [remarkFrontmatter, [remarkMdxFrontmatter, { name: 'frontmatter' }]] }),
     ],
   })
+
+  installUnlinkSuppression(server)
 
   server.middlewares.use((request, response, next) => {
     if (request.method !== 'GET' || (request.url !== '/' && request.url !== '/index.html')) {
@@ -461,6 +476,8 @@ async function deleteChapter(
     unlinkSync(chapter.path)
     // Front-run chokidar's async pickup so HMR invalidation can't race a later navigation
     server.watcher.emit('unlink', chapter.path)
+    // Chokidar still detects the same unlink moments later; suppress that redundant repeat
+    suppressedUnlinks.get(server)?.add(chapter.path)
 
     // This route only ever runs via the dev server, which always backfills order
     const remaining = book.chapters

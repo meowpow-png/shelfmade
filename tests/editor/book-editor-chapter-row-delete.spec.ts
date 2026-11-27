@@ -86,6 +86,31 @@ test('deleting the selected chapter falls back to the new first chapter', async 
   await expect(chapter('Die Leuchtturmkatze')).toBeVisible()
 })
 
+test('deleting a chapter updates the editor without reloading the page', async ({
+  openBook,
+  page,
+}) => {
+  await openBook('field-notes')
+
+  // Only survives in-page JS state; a real reload would wipe it, unlike an HMR self-accept update
+  await page.evaluate(() => {
+    ;(window as unknown as { __noReloadMarker?: boolean }).__noReloadMarker = true
+  })
+
+  await page.getByRole('button', { name: 'Actions for Chapter Two' }).click()
+  await page.getByRole('menuitem', { name: 'Delete' }).click()
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+
+  await expect(page.getByRole('button', { name: 'Chapter Two', exact: true })).toHaveCount(0)
+  // Outlasts chokidar's own, later detection of the same delete, which a reload would race in on
+  await page.waitForTimeout(500)
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __noReloadMarker?: boolean }).__noReloadMarker,
+    ),
+  ).toBe(true)
+})
+
 test('deleting a non-selected chapter leaves the current selection untouched', async ({
   openBook,
   page,
