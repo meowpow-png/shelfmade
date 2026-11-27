@@ -1,9 +1,12 @@
+import { type ReactNode } from 'react'
+
 import { DropdownMenu } from 'radix-ui'
 
 import { EllipsisVerticalIcon } from '@/client/EllipsisVerticalIcon'
 
 interface RowMenuItem {
   label: string
+  icon?: ReactNode
   onSelect: () => void
 }
 
@@ -26,6 +29,7 @@ export function RowMenu({ label, disabled, items }: RowMenuProps) {
         <DropdownMenu.Content className="row-menu-content" align="end" sideOffset={4}>
           {items.map((item) => (
             <DropdownMenu.Item key={item.label} className="row-menu-item" onSelect={item.onSelect}>
+              {item.icon}
               {item.label}
             </DropdownMenu.Item>
           ))}

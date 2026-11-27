@@ -406,6 +406,9 @@ body {
 }
 
 .row-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 8px 10px;
   border-radius: 6px;
   color: var(--color-text-primary);
@@ -417,6 +420,16 @@ body {
 
 .row-menu-item[data-highlighted] {
   background: var(--color-surface);
+}
+
+.row-menu-item-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.row-menu-item-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .chapter-delete-overlay {

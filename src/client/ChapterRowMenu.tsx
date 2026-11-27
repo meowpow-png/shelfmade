@@ -1,4 +1,6 @@
+import { PencilIcon } from '@/client/PencilIcon'
 import { RowMenu } from '@/client/RowMenu'
+import { TrashIcon } from '@/client/TrashIcon'
 
 interface ChapterRowMenuProps {
   title: string
@@ -13,8 +15,12 @@ export function ChapterRowMenu({ title, disabled, onRename, onDelete }: ChapterR
       label={`Actions for ${title}`}
       disabled={disabled}
       items={[
-        { label: 'Rename', onSelect: onRename },
-        { label: 'Delete', onSelect: onDelete },
+        {
+          label: 'Rename',
+          icon: <PencilIcon className="row-menu-item-icon" />,
+          onSelect: onRename,
+        },
+        { label: 'Delete', icon: <TrashIcon className="row-menu-item-icon" />, onSelect: onDelete },
       ]}
     />
   )
